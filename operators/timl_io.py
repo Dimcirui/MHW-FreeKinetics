@@ -77,7 +77,7 @@ class TIMLImporter(Operator,ImportHelper,ImporterBase):
     bl_idname = "freehk.import_timl"
     bl_label = "Import MHW TIML file (.timl)"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
-    bl_description = "Import TIML into FreeHK Tree"
+    bl_description = "Import TIML into Free Kinetics Tree"
     
     filename_ext = ".timl"
     filter_glob : StringProperty(default="*.timl", options={'HIDDEN'}, maxlen=255)
@@ -96,7 +96,7 @@ class EFXImporter(Operator,ImportHelper,ImporterBase):
     bl_idname = "freehk.import_efx"
     bl_label = "Import MHW EFX TIML file (.efx)"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}    
-    bl_description = "Import TIML into FreeHK Tree"
+    bl_description = "Import TIML into Free Kinetics Tree"
     
     filename_ext = ".efx"
     filter_glob : StringProperty(default="*.efx", options={'HIDDEN'}, maxlen=255)

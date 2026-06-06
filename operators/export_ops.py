@@ -17,9 +17,9 @@ class FileError(Exception):
 
 class TreeExporter(bpy.types.Operator):
     bl_idname = "freehk.export"
-    bl_label = "Export MHW Free HK Tree (.timl/.efx/.lmt)"
+    bl_label = "Export MHW Free Kinetics Tree (.timl/.efx/.lmt)"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
-    bl_description = "Export FreeHK Tree"
+    bl_description = "Export Free Kinetics Tree"
     addon_key = __package__.split('.')[0]
     
     mode : EnumProperty(name = "Exporter Modes",
@@ -42,7 +42,7 @@ class TreeExporter(bpy.types.Operator):
             "efx":      "Export only EFX file nodes",
             "timl":     "Export only TIML file nodes",
             "json":     "Export only JSON file nodes",
-        }.get(properties.mode, "Export FreeHK Tree")
+        }.get(properties.mode, "Export Free Kinetics Tree")
     @classmethod
     def poll(cls,context):
         return context.space_data and hasattr(context.space_data,"node_tree") and context.space_data.node_tree
@@ -151,7 +151,7 @@ classes = [
     ]
 
 def exporter_menu_ops(self, context):
-    self.layout.operator(TreeExporter.bl_idname, text="MHW FREEHK Tree (.timl/.efx/.lmt)")
+    self.layout.operator(TreeExporter.bl_idname, text="MHW Free Kinetics Tree (.timl/.efx/.lmt)")
     
 def register():
     for cls in classes:

@@ -19,7 +19,7 @@ from ..error_handling.errorController import ShowMessageBox
 
 class CreateFCurve(bpy.types.Operator):
     bl_idname = "freehk.create_fcurve"
-    bl_label = "Customize F-Curve with FreeHK Properties"
+    bl_label = "Customize F-Curve with Free Kinetics Properties"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Customize F-Curve"
     
@@ -150,7 +150,7 @@ class MappedActionOperator():
             else:
                 errors.append("Action %s is missing a tether which is required for the operation"%action.name)
         if errors:
-            print("Errors during FreeHK Operation:")
+            print("Errors during Free Kinetics Operation:")
             for err in errors:
                 print("\t",err)
             ShowMessageBox("Potential Errors were found see a list in the Windows Console (Window > Toggle System Console)", "Errors Found", 'ERROR')
@@ -238,9 +238,9 @@ class ResampleSelectedTIMLFCurve(MappedActionOperator,bpy.types.Operator):
 
 class GlobalEnableFCurves(MappedActionOperator,bpy.types.Operator):
     bl_idname = "freehk.create_fcurve_action"
-    bl_label = "Enable FreeHK FCurves"
+    bl_label = "Enable Free Kinetics FCurves"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
-    bl_description = "Enables all fcurves on action with FreeHK properties."
+    bl_description = "Enables all fcurves on action with Free Kinetics properties."
     tetherless = True
     limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
@@ -276,7 +276,7 @@ class MaximizeQuality(MappedActionOperator,bpy.types.Operator):
 
 class CheckActionForExport(MappedActionOperator,bpy.types.Operator):
     bl_idname = "freehk.check_export"
-    bl_label = "Check Action for FreeHK Export"
+    bl_label = "Check Action for Free Kinetics Export"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Run the action through the Exporter Process to see possible errors"
     tetherless = True

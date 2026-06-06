@@ -13,11 +13,11 @@ from ...struct import TIML,Lmt,ExtensibleList
 try:
     from ...app_license.license import signature
     licensed = True
-    print("FreeHK Commercial License")
+    print("Free Kinetics Commercial License")
 except:
     signature = lambda: True
     licensed = False
-    print("FreeHK Free License")
+    print("Free Kinetics Free License")
 
 class TIMLDataNode(FreeHKNode, Node):
     '''TIML Data Node'''

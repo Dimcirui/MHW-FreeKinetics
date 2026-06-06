@@ -179,6 +179,6 @@ def getCurrentTree(hide = False):
         current_tree = getNewTree()
     return uiNodeManager(current_tree,hide)
 
-def getNewTree(name = "Free HK Tree", hide = False):
+def getNewTree(name = "Free Kinetics Tree", hide = False):
     return uiNodeManager(bpy.data.node_groups.new(name,"FreeHKNodeTree"),hide)
         

@@ -44,7 +44,7 @@ class _PanelBase(object):
 
 class TIMLControllerObjectPanel(_PanelBase, bpy.types.Panel):
     bl_idname = 'OBJECT_PT_freehk_object'
-    bl_label = 'Free HK TIML Controls'
+    bl_label = 'Free Kinetics TIML Controls'
 
     @classmethod
     def poll(cls, context):
@@ -187,7 +187,7 @@ def lmtMapSettings(context,layout,action):
     
 
 class ActionDataTools(bpy.types.Panel):
-    bl_category = "MHW FreeHK"
+    bl_category = "MHW Kinetics"
     bl_idname = "FREEHK_PT_action_props"
     bl_label = "Action Data"
     bl_space_type = "DOPESHEET_EDITOR"
@@ -203,7 +203,7 @@ class ActionDataTools(bpy.types.Panel):
             box = layout.box()
             self.draw_action_props(context,box,action)
             self.draw_mod_tools(context, box,action)
-        #layout.prop(self, "starType", name="FreeHK Type")
+        #layout.prop(self, "starType", name="Free Kinetics Type")
         layout.separator()
 
     def draw_mod_tools(self, context, layout,action):
@@ -218,12 +218,12 @@ class ActionDataTools(bpy.types.Panel):
             lmtMapSettings(context,layout,action)
 
     def draw_action_props(self, context, layout,action):
-        layout.prop(action.freehk,"starType",text = "FreeHK Action Type")
+        layout.prop(action.freehk,"starType",text = "Free Kinetics Action Type")
         if action.freehk.starType == "TIML_Action":
             #layout.separator()
-            #layout.label(text="FreeHK TIML Paramaters")
-            layout.prop(action.freehk,"timelineParam",text = "FreeHK Timeline Type")
-            layout.prop(action.freehk,"unkn0",text = "FreeHK Unknown Parameter")
+            #layout.label(text="Free Kinetics TIML Paramaters")
+            layout.prop(action.freehk,"timelineParam",text = "Free Kinetics Timeline Type")
+            layout.prop(action.freehk,"unkn0",text = "Free Kinetics Unknown Parameter")
             
             col = layout.column(align = True)
             col.label(text="Property Export Order")
@@ -253,7 +253,7 @@ lmtTools = ["clear_tether","transform_tether_silent","transform_tether","update_
             ]
 lmtDescriptions = ["Clear %sTethers","Transfer %sTethers","Transfer %s& Update","Update %sNames",
                    "Update %sBone Functions","Complete %sChannels","Synchronize %sKeyframes",
-                   "Resample %sSelected FCurves","Resample %sFCurves","Enable %sFreeHK FCurves",
+                   "Resample %sSelected FCurves","Resample %sFCurves","Enable %sFree Kinetics FCurves",
                    "Clear %sEncodings","Maximize %sEncodings",
                    "Check %sfor Export"]
 lmtIcons = ["FREEHK_CLEAR","FREEHK_TRANSFER_SILENT","FREEHK_TRANSFER","FREEHK_NAMES","FREEHK_BONES",
@@ -262,11 +262,11 @@ lmtIcons = ["FREEHK_CLEAR","FREEHK_TRANSFER_SILENT","FREEHK_TRANSFER","FREEHK_NA
             "FREEHK_CLEAR_ENCODE","FREEHK_MAX_ENCODE",
             "FREEHK_CHECK"]
 
-#layout.operator("freehk.resample_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
-#layout.operator("freehk.create_fcurve_action",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
+#layout.operator("freehk.resample_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add Free Kinetics Props")
+#layout.operator("freehk.create_fcurve_action",icon_value=pcoll["FREEHK"].icon_id, text="Add Free Kinetics Props")
 
 class ActionTools(LMTPanel,bpy.types.Panel):
-    bl_category = "MHW FreeHK"
+    bl_category = "MHW Kinetics"
     bl_idname = "FREEHK_PT_action_tools"
     bl_label = "Action Tools"
     bl_space_type = "DOPESHEET_EDITOR"
@@ -370,7 +370,7 @@ def encodingName(ix):
     return encodingMap[ix][1]
 
 class FCurveTools(LMTPanel,bpy.types.Panel):
-    bl_category = "MHW FreeHK"
+    bl_category = "MHW Kinetics"
     bl_idname = "FREEHK_PT_fcurve_props"
     bl_label = "F-Curve Data"
     bl_space_type = "DOPESHEET_EDITOR"
@@ -409,7 +409,7 @@ class FCurveTools(LMTPanel,bpy.types.Panel):
                         col.prop(fcurve,"freehk_bone_id",text = "Bone ID")
                         modified = True
                     if not modified:
-                        creator = col.operator("freehk.create_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
+                        creator = col.operator("freehk.create_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add Free Kinetics Props")
                         creator.action = bpy.data.actions.find(action.name)
                         creator.fcurve = fi
                     #layout.separator()
@@ -418,7 +418,7 @@ class FCurveTools(LMTPanel,bpy.types.Panel):
 
 
 class KeyframeTools(bpy.types.Panel):
-    bl_category = "MHW FreeHK"
+    bl_category = "MHW Kinetics"
     bl_idname = "FREEHK_PT_keyframe_props"
     bl_label = "Keyframe Data"
     bl_space_type = "DOPESHEET_EDITOR"
@@ -441,14 +441,14 @@ class KeyframeTools(bpy.types.Panel):
                             path = nameDataPath(fcurve)
                         col.label(text="%s Keyframe [%d]"%(path,p.co[0]))
                         if action.freehk.starType == "TIML_Action":
-                            col.prop(p, "interpolation", text="FreeHK Interpolation")
+                            col.prop(p, "interpolation", text="Free Kinetics Interpolation")
                         row = col.row(align=True)
-                        row.label(text="FreeHK Frame Value")
+                        row.label(text="Free Kinetics Frame Value")
                         row.prop(p,"co",index=0,text="Time")
                         row.prop(p,"co",index=1,text="Value")
                         if action.freehk.starType == "TIML_Action":
-                            col.prop(p, "back", text="FreeHK Parameter 1")
-                            col.prop(p, "period", text="FreeHK Parameter 2")
+                            col.prop(p, "back", text="Free Kinetics Parameter 1")
+                            col.prop(p, "period", text="Free Kinetics Parameter 2")
                         #layout.separator()
                         count += 1    
                         if count >= limit: return
@@ -474,7 +474,7 @@ classes = [
     AnimData,ActionTools,FCurveData,KeyframeData,ActionDataTools,FCurveTools,KeyframeTools,TIMLControllerObjectPanel,
 ]
 
-# Integer-typed proxies over the FreeHK F-Curve modifier (min_x/min_y are floats in RNA).
+# Integer-typed proxies over the Free Kinetics F-Curve modifier (min_x/min_y are floats in RNA).
 def _get_encoding(self):
     mod = fetchFreeHKCustom(self)
     return int(round(mod.min_x)) if mod else 0

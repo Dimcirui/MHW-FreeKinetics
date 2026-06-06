@@ -12,7 +12,7 @@ from bpy.types import NodeTree,Node
 class FreeHKCustomTree(NodeTree):
     ''' Free Hyper Kinetics - Monster Hunter World Animation Editing Tree '''
     bl_idname = 'FreeHKNodeTree'
-    bl_label = 'FreeHK Node Tree'
+    bl_label = 'Free Kinetics Node Tree'
     bl_icon = 'RENDER_ANIMATION'
     
 

@@ -19,44 +19,44 @@ class FreeHKSocket:
 class AnimationSocket(NodeSocket,FreeHKSocket):    
     '''MHW Animation Socket'''
     bl_idname = 'FreeHKAnimationSocket'
-    bl_label = "FreeHK Animation Socket"
+    bl_label = "Free Kinetics Animation Socket"
     rgb = (13,79,145)
     
 class EFXEntrySocket(NodeSocket,FreeHKSocket):
     '''MHW Special Effect Socket'''
     bl_idname = 'FreeHKEFXEntrySocket'
-    bl_label = "FreeHK EFX Socket"
+    bl_label = "Free Kinetics EFX Socket"
     rgb = (54,141,24)
     
 class TIMLSocket(NodeSocket,FreeHKSocket):
     '''MHW Timeline Socket'''
     bl_idname = 'FreeHKTimlSocket'
-    bl_label = "FreeHK Timeline Socket"
+    bl_label = "Free Kinetics Timeline Socket"
     rgb = (125,79,202)
     
 
 class LMTEntrySocket(NodeSocket,FreeHKSocket):    
     '''MHW Animation Socket'''
     bl_idname = 'FreeHKAnimationEntrySocket'
-    bl_label = "FreeHK Animation Socket"
+    bl_label = "Free Kinetics Animation Socket"
     rgb = (48,162,254)
     
 class TIMLDataSocket(NodeSocket,FreeHKSocket):
     '''MHW Timeline Socket'''
     bl_idname = 'FreeHKTimlDataSocket'
-    bl_label = "FreeHK Timeline Socket"
+    bl_label = "Free Kinetics Timeline Socket"
     rgb = (204,131,222)
 
 class TIMLEntrySocket(NodeSocket,FreeHKSocket):
     '''MHW Timeline Socket'''
     bl_idname = 'FreeHKTimlEntrySocket'
-    bl_label = "FreeHK Timeline Socket"
+    bl_label = "Free Kinetics Timeline Socket"
     rgb = (255,183,222)    
 
 class GenericSocket(NodeSocket,FreeHKSocket):
     '''MHW Generic Socket'''
     bl_idname = 'FreeHKGenericSocket'
-    bl_label = "FreeHK Generic Socket"
+    bl_label = "Free Kinetics Generic Socket"
     rgb = (202,198,215)    
 
 classes = [

@@ -129,16 +129,16 @@ class RescaleAnimations(GlobalNodeModifier,RescaleAnimation):
     end_frame: bpy.props.IntProperty(name = "End Frame", default = -1)
     discretize: bpy.props.BoolProperty(name = "Discretize Keyframes", default = True)
 
-#layout.operator("freehk.resample_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
-#layout.operator("freehk.create_fcurve_action",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
+#layout.operator("freehk.resample_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add Free Kinetics Props")
+#layout.operator("freehk.create_fcurve_action",icon_value=pcoll["FREEHK"].icon_id, text="Add Free Kinetics Props")
 
 class ActionToolsNodes(bpy.types.Panel):
     bl_idname = "FREEHK_PT_tree_tools_lmt_ops"
     bl_space_type = 'NODE_EDITOR'
-    bl_category = "MHW Free HK"
+    bl_category = "MHW Kinetics"
     bl_region_type = 'UI'
-    bl_label = "Free HK Action Tools"
-    bl_description = "FreeHK Action Tools"
+    bl_label = "Free Kinetics Action Tools"
+    bl_description = "Free Kinetics Action Tools"
     
     def draw(self, context):
         layout = self.layout
@@ -166,10 +166,10 @@ class ActionToolsNodes(bpy.types.Panel):
 class ExportSettings(bpy.types.Panel):
     bl_idname = "FREEHK_PT_tree_tools_export"
     bl_space_type = 'NODE_EDITOR'
-    bl_category = "MHW Free HK"
+    bl_category = "MHW Kinetics"
     bl_region_type = 'UI'
-    bl_label = "Free HK Export Settings"
-    bl_description = "FreeHK Export Settings"
+    bl_label = "Free Kinetics Export Settings"
+    bl_description = "Free Kinetics Export Settings"
 
     addon_key = __package__.split('.')[0]   
 
@@ -197,10 +197,10 @@ class ExportSettings(bpy.types.Panel):
 class TreeTools(bpy.types.Panel):
     bl_idname = "FREEHK_PT_tree_tools"
     bl_space_type = 'NODE_EDITOR'
-    bl_category = "MHW Free HK"
+    bl_category = "MHW Kinetics"
     bl_region_type = 'UI'
-    bl_label = "Free HK Tree Tools"
-    bl_description = "FreeHK Tree Tools"
+    bl_label = "Free Kinetics Tree Tools"
+    bl_description = "Free Kinetics Tree Tools"
     
     @classmethod
     def poll(cls, context):

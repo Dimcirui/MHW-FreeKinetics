@@ -25,7 +25,7 @@ class LMTImporter(Operator,ImportHelper,ImporterBase):
     bl_idname = "freehk.import_lmt"
     bl_label = "Import MHW LMT file (.lmt)"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}    
-    bl_description = "Import LMT into FreeHK Tree"
+    bl_description = "Import LMT into Free Kinetics Tree"
     
     filename_ext = ".lmt"
     filter_glob : StringProperty(default="*.lmt", options={'HIDDEN'}, maxlen=255)

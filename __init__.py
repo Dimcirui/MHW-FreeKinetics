@@ -37,7 +37,7 @@ except:
 
 content=bytes("","UTF-8")
 bl_info = {
-    "name": "Free Hyper-Kinetics",
+    "name": "Free Kinetics",
     "description": "Monster Hunter Animations and Timelines Import Export Tools",
     "category": "Import-Export",
     "author": "AsteriskAmpersand",

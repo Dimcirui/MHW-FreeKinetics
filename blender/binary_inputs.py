@@ -51,7 +51,7 @@ class InputEditorProperties(bpy.types.PropertyGroup):
     datapath: bpy.props.EnumProperty( items = bigFlagCheck,name = "Input Property")
     inputs: bpy.props.CollectionProperty(type=KeyframeChannels)
     show_unused: bpy.props.BoolProperty(name = "Show Unused Channels", default = False)
-    update_parameters: bpy.props.BoolProperty(name = "Update FreeHK Parameter", default = True)
+    update_parameters: bpy.props.BoolProperty(name = "Update Free Kinetics Parameter", default = True)
 
 class InputEditorGet(bpy.types.Operator):
     bl_idname = "freehk_inputs.get"
@@ -195,7 +195,7 @@ class TIMLControllerObjectPanel(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_context = 'object'
     bl_idname = 'FREEHK_PT_input_editor'
-    bl_label = 'Free HK Input Editing'
+    bl_label = 'Free Kinetics Input Editing'
 
     @classmethod
     def poll(cls, context):
