@@ -146,10 +146,10 @@ def exporter_menu_ops(self, context):
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.INFO_MT_file_export.append(exporter_menu_ops)
+    bpy.types.TOPBAR_MT_file_export.append(exporter_menu_ops)
     
 def unregister():
-    bpy.types.INFO_MT_file_export.remove(exporter_menu_ops)
+    bpy.types.TOPBAR_MT_file_export.remove(exporter_menu_ops)
     for cls in classes:
         bpy.utils.unregister_class(cls)
     

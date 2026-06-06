@@ -436,14 +436,14 @@ if blender:
         addon = bpy.context.user_preferences.addons[addon_key]
         wrong = addon.preferences.enable_wrong
         if wrong:
-            bpy.types.INFO_MT_file_import.append(menu_func_import_mhfu)
+            bpy.types.TOPBAR_MT_file_import.append(menu_func_import_mhfu)
         #    bpy.types.INFO_MT_file_import.append(menu_func_export_mhfu)
 
     def unregister():
         for cls in classes:
             bpy.utils.unregister_class(cls)
-        if menu_func_import_mhfu in bpy.types.INFO_MT_file_export:
-            bpy.types.INFO_MT_file_export.remove(menu_func_import_mhfu)
+        if menu_func_import_mhfu in bpy.types.TOPBAR_MT_file_export:
+            bpy.types.TOPBAR_MT_file_export.remove(menu_func_import_mhfu)
         # if menu_func_export_mhfu in bpy.types.INFO_MT_file_export:
         #    bpy.types.INFO_MT_file_export.remove(menu_func_export_mhfu)
 

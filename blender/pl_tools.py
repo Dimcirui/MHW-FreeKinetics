@@ -201,12 +201,12 @@ classes = [ImportPL, ExportPL, createPL, selectionPL, updatePL, enablePL, disabl
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.INFO_MT_file_import.append(pl_import_menu)
-    bpy.types.INFO_MT_file_export.append(pl_export_menu)
+    bpy.types.TOPBAR_MT_file_import.append(pl_import_menu)
+    bpy.types.TOPBAR_MT_file_export.append(pl_export_menu)
             
     
 def unregister():
-    bpy.types.INFO_MT_file_import.remove(pl_import_menu)
-    bpy.types.INFO_MT_file_export.remove(pl_export_menu)
+    bpy.types.TOPBAR_MT_file_import.remove(pl_import_menu)
+    bpy.types.TOPBAR_MT_file_export.remove(pl_export_menu)
     for cls in classes:
         bpy.utils.unregister_class(cls)

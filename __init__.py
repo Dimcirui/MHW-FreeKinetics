@@ -114,7 +114,7 @@ def register():
     for cl in classes:
         bpy.utils.register_class(cl)
     for iF in exportFunctions:
-        bpy.types.INFO_MT_file_export.append(iF)
+        bpy.types.TOPBAR_MT_file_export.append(iF)
     for r in modules:
         r.register()
     
@@ -123,7 +123,7 @@ def unregister():
     for cl in classes:
         bpy.utils.unregister_class(cl)
     for iF in exportFunctions:
-        bpy.types.INFO_MT_file_export.remove(iF)   
+        bpy.types.TOPBAR_MT_file_export.remove(iF)   
     for u in modules:
         u.unregister()
     
