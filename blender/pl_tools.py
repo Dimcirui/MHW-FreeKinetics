@@ -107,7 +107,7 @@ class createPL(bpy.types.Operator):
     bl_label = 'Creates a PL Proxy'
     bl_description = 'Creates a PL Proxy Node'
     bl_options = {"REGISTER", "UNDO"}
-    viscon = IntProperty(name = "Visible Condition", default = 0)
+    viscon : IntProperty(name = "Visible Condition", default = 0)
     
     def execute(self,context):
         if bpy.context.active_object:
@@ -124,8 +124,8 @@ class selectionPL(bpy.types.Operator):
     bl_label = 'Convert Selection to PL Proxy'
     bl_description = 'Converts selection with individual transforms to PL Proxies with No Transform'
     bl_options = {"REGISTER", "UNDO"}
-    epsilon = FloatProperty(name = "Merge Distance", default = 0.01)
-    viscon = IntProperty(name = "Default Visible Condition", default = -1)
+    epsilon : FloatProperty(name = "Merge Distance", default = 0.01)
+    viscon : IntProperty(name = "Default Visible Condition", default = -1)
     
     def execute(self,context):
         sel_objs = [objs for objs in bpy.context.selected_objects]

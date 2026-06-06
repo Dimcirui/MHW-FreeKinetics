@@ -35,14 +35,14 @@ class ExportFreedomUniteAnimation(Operator, ExportHelper):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
  
     filename_ext = ".fhat"
-    filter_glob = StringProperty(default="*.fhat", options={'HIDDEN'}, maxlen=255)
+    filter_glob : StringProperty(default="*.fhat", options={'HIDDEN'}, maxlen=255)
     
-    skeleton = EnumProperty(
+    skeleton : EnumProperty(
             name = "Skeleton",
             description = "Selects the skeleton or empty root on which animation indexes will be generated",
             items = skeletonCandidates,
             )
-    typingR = EnumProperty(
+    typingR : EnumProperty(
             name = "Rotation Type",
             description = "Select binary type",
             items = [
@@ -51,7 +51,7 @@ class ExportFreedomUniteAnimation(Operator, ExportHelper):
                 ("2", "Extended Short", "Extended Short"),
                 ],
             default = "0")
-    typingT = EnumProperty(
+    typingT : EnumProperty(
             name = "Translation Type",
             description = "Select binary type",
             items = [
@@ -60,7 +60,7 @@ class ExportFreedomUniteAnimation(Operator, ExportHelper):
                 ("2", "Extended Short", "Extended Short"),
                 ],
             default = "0")
-    typingS = EnumProperty(
+    typingS : EnumProperty(
             name = "Scale Type",
             description = "Select binary type",
             items = [
@@ -69,21 +69,21 @@ class ExportFreedomUniteAnimation(Operator, ExportHelper):
                 ("2", "Extended Short", "Extended Short"),
                 ],
             default = "0")
-    startingBone = IntProperty(
+    startingBone : IntProperty(
             name = "Starting Bone Index",
             description = "Index on which the last animation left.",
             default = 0)
-    fix = BoolProperty(
+    fix : BoolProperty(
             name = "Rectify Quaternions",
             description = "Rectify Quaternion into Euler Rotations",
             default = True
         )
-    body = BoolProperty(
+    body : BoolProperty(
             name = "Rectify Player Body Y Position",
             description = "Exports player Bone.002 at a 110 offset",
             default = True
         )
-    name = BoolProperty(
+    name : BoolProperty(
             name = "Bone by Name",
             description = "Exports bones based on name instead of hierarchy",
             default = False

@@ -42,7 +42,7 @@ class GoToEntry(bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Center view on node with entry index."
     #index = IntProperty(name="Index",description="Index",default=0)
-    typing = EnumProperty(name="Type",description="Node Type",
+    typing : EnumProperty(name="Type",description="Node Type",
                           items = [(TIMLENTRY,"TIML Entry",""),
                                    (LMTENTRY,"LMT Entry",""),
                                    (EFXENTRY,"EFX Entry",""),                              

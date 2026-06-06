@@ -18,7 +18,7 @@ class ImportPL(Operator, ImportHelper):
  
     # ImportHelper mixin class uses this
     filename_ext = ".pl"
-    filter_glob = StringProperty(default="*.pl", options={'HIDDEN'}, maxlen=255)
+    filter_glob : StringProperty(default="*.pl", options={'HIDDEN'}, maxlen=255)
 
             
     def cleanup(self,obj):

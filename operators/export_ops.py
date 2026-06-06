@@ -22,7 +22,7 @@ class TreeExporter(bpy.types.Operator):
     bl_description = "Export FreeHK Tree"
     addon_key = __package__.split('.')[0]
     
-    mode = EnumProperty(name = "Exporter Modes",
+    mode : EnumProperty(name = "Exporter Modes",
                         description = "Exporter Operation Mode",
                         items = [
                             ("all","All","Export all Nodes",),

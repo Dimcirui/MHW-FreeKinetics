@@ -19,7 +19,7 @@ class ExportPL(Operator, ExportHelper):
  
     # ImportHelper mixin class uses this
     filename_ext = ".pl"
-    filter_glob = StringProperty(default="*.pl", options={'HIDDEN'}, maxlen=255)
+    filter_glob : StringProperty(default="*.pl", options={'HIDDEN'}, maxlen=255)
 
     @staticmethod
     def showMessageBox(message = "", title = "Message Box", icon = 'INFO'):

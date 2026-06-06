@@ -16,14 +16,14 @@ from ...error_handling.errorController import ErrorHandler
 def getEntryIndex(node):
     return node.entryNum
 
-outputProps = '''customizeExport = BoolProperty(name = "Customize Export",default = False)
+outputProps = '''customizeExport: BoolProperty(name = "Customize Export",default = False)
 
-graph_error = EnumProperty(name = "Graph Error Handling",items = errorItems,default = "Fix")
-action_error = EnumProperty(name = "Action Error Handling",items = errorItems,default = "Fix")
-fcurve_error = EnumProperty(name = "FCurve Error Handling",items = errorItems,default = "Fix")
-error_text_level = EnumProperty(name = "Error Descriptiveness Level",items = errorTextLevel,default = "Verbose")
-error_log_level = EnumProperty(name = "Filter Errors Output",items = errorDisplayLevel,default = "All")
-export_hidden = BoolProperty(name = "Export Muted F-Curves", default = True, description = "Include Muted F-Curves on Export")
+graph_error: EnumProperty(name = "Graph Error Handling",items = errorItems,default = "Fix")
+action_error: EnumProperty(name = "Action Error Handling",items = errorItems,default = "Fix")
+fcurve_error: EnumProperty(name = "FCurve Error Handling",items = errorItems,default = "Fix")
+error_text_level: EnumProperty(name = "Error Descriptiveness Level",items = errorTextLevel,default = "Verbose")
+error_log_level: EnumProperty(name = "Filter Errors Output",items = errorDisplayLevel,default = "All")
+export_hidden: BoolProperty(name = "Export Muted F-Curves", default = True, description = "Include Muted F-Curves on Export")
 '''
 
 class FreeHKOutputNode(FreeHKNode):

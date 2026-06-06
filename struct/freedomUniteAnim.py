@@ -338,7 +338,7 @@ if blender:
         bl_label = "Cycle Bone Names for Testing"
         bl_options = {'REGISTER', 'PRESET', 'UNDO'}
 
-        startPoint = IntProperty(name="Skip Initial", default=2)
+        startPoint : IntProperty(name="Skip Initial", default=2)
 
         def execute(self, context):
             def getName(x): return x.name
@@ -369,9 +369,9 @@ if blender:
 
         # ImportHelper mixin class uses this
         filename_ext = ".fua"
-        filter_glob = StringProperty(
+        filter_glob : StringProperty(
             default="*.fua", options={'HIDDEN'}, maxlen=255)
-        split = BoolProperty(name="Player Animation", default=False)
+        split : BoolProperty(name="Player Animation", default=False)
 
         def execute(self, context):
             skeleton = getSkeleton(context)

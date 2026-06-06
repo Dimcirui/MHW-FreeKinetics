@@ -21,20 +21,20 @@ importPropSetup = []
 props = [(bname+axis.lower(),pname+" "+axis+" "+"Map") for bname,pname in zip(["trans","rot","scl"],["Translation","Rotation","Scale"]) 
      for axis in ["X","Y","Z"]]
 defaults = "m8E8AFE06 mF98DCE90 m60849F2A mF105BBE3 m86028B75 m1F0BDACF m9486DF23 mE381EFB5 m7A88BE0F".split(" ")
-importPropSetup.append("""advanced_remap = bpy.props.BoolProperty(name = "Estimate Remap",
+importPropSetup.append("""advanced_remap: bpy.props.BoolProperty(name = "Estimate Remap",
                                             description = "Estimate remapping from actions present",
                                             default = True)""")
 for (bname,pname),default in zip(props,defaults):
-    importPropSetup.append('%s = EnumProperty(name = "%s",items = geometryitems,default = "%s")'%(bname,pname,default))
-importPropSetup.append("""clear_scene = BoolProperty(
+    importPropSetup.append('%s: EnumProperty(name = "%s",items = geometryitems,default = "%s")'%(bname,pname,default))
+importPropSetup.append("""clear_scene: BoolProperty(
         name = "Clear actions before import.",
         description = "Clears all actions and the animation tree before importing",
         default = True)""")
-importPropSetup.append("""reuse_tree = BoolProperty(
+importPropSetup.append("""reuse_tree: BoolProperty(
         name = "Use Selected Tree",
         description = "Uses currently selected tree for importing.",
         default = False)""")
-importPropSetup.append("""hide = BoolProperty(
+importPropSetup.append("""hide: BoolProperty(
         name = "Collapse Tree Nodes",
         description = "Collapses Tree Nodes to Save Space.",
         default = True)""")
@@ -87,7 +87,7 @@ class TIMLImporter(Operator,ImportHelper,ImporterBase):
     bl_description = "Import TIML into FreeHK Tree"
     
     filename_ext = ".timl"
-    filter_glob = StringProperty(default="*.timl", options={'HIDDEN'}, maxlen=255)
+    filter_glob : StringProperty(default="*.timl", options={'HIDDEN'}, maxlen=255)
     
     for p in importPropSetup:
         exec(p)
@@ -106,7 +106,7 @@ class EFXImporter(Operator,ImportHelper,ImporterBase):
     bl_description = "Import TIML into FreeHK Tree"
     
     filename_ext = ".efx"
-    filter_glob = StringProperty(default="*.efx", options={'HIDDEN'}, maxlen=255)
+    filter_glob : StringProperty(default="*.efx", options={'HIDDEN'}, maxlen=255)
     
     for p in importPropSetup:
         exec(p)

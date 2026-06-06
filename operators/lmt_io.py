@@ -28,26 +28,26 @@ class LMTImporter(Operator,ImportHelper,ImporterBase):
     bl_description = "Import LMT into FreeHK Tree"
     
     filename_ext = ".lmt"
-    filter_glob = StringProperty(default="*.lmt", options={'HIDDEN'}, maxlen=255)
+    filter_glob : StringProperty(default="*.lmt", options={'HIDDEN'}, maxlen=255)
     
     for p in importPropSetup:exec(p)
     
-    anim_filter = BoolProperty(name="Filter Animation Range",
+    anim_filter : BoolProperty(name="Filter Animation Range",
                                description="Only imports a specified subset of the animations in the file",
                                default = False)
-    anim_filter_string = StringProperty(name="Animation Filter",
+    anim_filter_string : StringProperty(name="Animation Filter",
                                         description="Range of animations ids given with a dash and split by commas. (E.g. '1-12,33-44')",
                                         default = "")
-    include_parents = BoolProperty(name="Include Parents of Filtered Entries",
+    include_parents : BoolProperty(name="Include Parents of Filtered Entries",
                                description="Include the parent entry of implicit animation blocks instead of creating new instances",
                                default = False)
-    include_siblings = BoolProperty(name="Include Siblings and Children of Filtered Entries",
+    include_siblings : BoolProperty(name="Include Siblings and Children of Filtered Entries",
                                description="Include the sibling and children entries of implicit animation blocks",
                                default = False)
-    anim_skeleton = BoolProperty(name="Tether to Skeleton",
+    anim_skeleton : BoolProperty(name="Tether to Skeleton",
                                  description="Tether all imported animations to existing skeleton",
                                  default=False)
-    strip_buffer = BoolProperty(name="Remove Buffer Type",
+    strip_buffer : BoolProperty(name="Remove Buffer Type",
                                  description="Set all buffer types to be recalculated",
                                  default=False)
     

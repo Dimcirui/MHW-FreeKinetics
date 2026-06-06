@@ -54,25 +54,25 @@ class FreeHKAddonPreferences(AddonPreferences):
     # this must match the add-on name, use '__package__'
     # when defining this in a submodule of a python package.
     bl_idname = __name__
-    implicit_tether = BoolProperty(
+    implicit_tether : BoolProperty(
         name="Implicit Tethering",
         description="Performs bone function to animation linking implicitly",
         default=True,
     )
-    dumb_efx_timl = BoolProperty(
+    dumb_efx_timl : BoolProperty(
         name="Retrograde EFX Mode",
         description="Dumbs down the EFX importing mode to only use explicit timl declarations",
         default=False,
     )
-    graph_error = EnumProperty(name = "Graph Error Handling",items = errorItems,default = "Fix")
-    action_error = EnumProperty(name = "Action Error Handling",items = errorItems,default = "Fix")
-    fcurve_error = EnumProperty(name = "FCurve Error Handling",items = errorItems,default = "Fix")
-    error_text_level = EnumProperty(name = "Error Descriptiveness Level",items = errorTextLevel,default = "Verbose")
-    error_log_level = EnumProperty(name = "Filter Errors Output",items = errorDisplayLevel,default = "All")
-    export_hidden = BoolProperty(name = "Export Muted F-Curves", default = True, description = "Include Muted F-Curves on Export")
-    output_log = BoolProperty(name = "Log Export Info",default = True,description = "Write Export Process Information to a Log File")
-    output_log_folder = StringProperty(name = "Export Output Log Directory",subtype = 'DIR_PATH')
-    enable_wrong = BoolProperty(name = "Enable Freedom Unite Features", default = False, description = "Enables Freedom Unite Animation Tools")
+    graph_error : EnumProperty(name = "Graph Error Handling",items = errorItems,default = "Fix")
+    action_error : EnumProperty(name = "Action Error Handling",items = errorItems,default = "Fix")
+    fcurve_error : EnumProperty(name = "FCurve Error Handling",items = errorItems,default = "Fix")
+    error_text_level : EnumProperty(name = "Error Descriptiveness Level",items = errorTextLevel,default = "Verbose")
+    error_log_level : EnumProperty(name = "Filter Errors Output",items = errorDisplayLevel,default = "All")
+    export_hidden : BoolProperty(name = "Export Muted F-Curves", default = True, description = "Include Muted F-Curves on Export")
+    output_log : BoolProperty(name = "Log Export Info",default = True,description = "Write Export Process Information to a Log File")
+    output_log_folder : StringProperty(name = "Export Output Log Directory",subtype = 'DIR_PATH')
+    enable_wrong : BoolProperty(name = "Enable Freedom Unite Features", default = False, description = "Enables Freedom Unite Animation Tools")
     if licensed:exec(licenseProperty)        
     def draw(self, context):
         layout = self.layout
