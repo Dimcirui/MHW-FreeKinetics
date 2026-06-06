@@ -34,6 +34,16 @@ class TreeExporter(bpy.types.Operator):
                             ],
                         default = "all")
     @classmethod
+    def description(cls, context, properties):
+        return {
+            "all":      "Export every file node in the tree",
+            "selected": "Export only the selected file nodes",
+            "lmt":      "Export only LMT file nodes",
+            "efx":      "Export only EFX file nodes",
+            "timl":     "Export only TIML file nodes",
+            "json":     "Export only JSON file nodes",
+        }.get(properties.mode, "Export FreeHK Tree")
+    @classmethod
     def poll(cls,context):
         return context.space_data and hasattr(context.space_data,"node_tree") and context.space_data.node_tree
     def LMTExport(self,node):

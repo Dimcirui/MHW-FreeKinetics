@@ -17,7 +17,7 @@ transformStruct = {0:KeyframeShort,1:KeyframeFloat,2:KeyframeShortExtended}
 
 def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
     def draw(self, context):
-        self.layout.label(message)
+        self.layout.label(text=message)
     bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
     
 class UnknownTypeError(Exception):

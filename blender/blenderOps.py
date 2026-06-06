@@ -6,6 +6,23 @@ Created on Sun Jun 27 04:15:30 2021
 """
 import bpy
 import math
+import re
+
+_BONE_NAME_ID_RE = re.compile(r'^(?:mhbone|bonefunction)[_.](\d+)$', re.IGNORECASE)
+def boneNameToId(name):
+    """Parse the MHW bone-function id from an armature bone name.
+    Recognises MhBone_083 / bonefunction_083 / BoneFunction.083 -> 83. None if no match."""
+    m = _BONE_NAME_ID_RE.match(name or "")
+    return int(m.group(1)) if m else None
+
+def matchBoneId(action, fcurve):
+    """Set an F-Curve's Bone ID to the id encoded in its target bone name."""
+    path = fcurve.data_path
+    if '"' not in path:
+        return
+    bid = boneNameToId(path.split('"')[1])
+    if bid is not None:
+        setBoneFunction(fcurve, bid)
 
 def createTIMLAction(typing):
     action = bpy.data.actions.new("TIML::%s"%typing.timelineParameterString)

@@ -103,7 +103,7 @@ class NOTES_UL_items(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         if self.layout_type in {'DEFAULT'}:     
             r = layout.row(align = True)
-            r.label("%08X %s %08X = "%(item.int_input&0xFFFFFFFF,opMap[item.operation],binToInt(item.binary_target)))
+            r.label(text="%08X %s %08X = "%(item.int_input&0xFFFFFFFF,opMap[item.operation],binToInt(item.binary_target)))
             r.prop(item,'int_result',text="")
             #col = layout.column(align=True)
             #col.prop(item,"int_input")  

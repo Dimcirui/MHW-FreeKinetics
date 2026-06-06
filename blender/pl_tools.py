@@ -185,7 +185,7 @@ class PLTools(bpy.types.Panel):
     # bl_category = "Tools"
 
     def draw(self, context):
-        self.layout.label("EFX PL Tools")
+        self.layout.label(text="EFX PL Tools")
         col = self.layout.column(align = True)
         col.operator("pl_tools.create_pl", icon='MESH_CUBE', text="Create PL Proxy")
         col.operator("pl_tools.selection_pl", icon='MOD_ARRAY', text="Selection to PL Proxies")

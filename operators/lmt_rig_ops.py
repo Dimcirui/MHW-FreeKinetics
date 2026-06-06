@@ -122,12 +122,12 @@ class RigTransferTools(bpy.types.Panel):
         for bone in platform.presets[props.rigType].bone_presets:
             box = layout.box()
             box = box.column(align=True)
-            box.label(bone.platformName)
+            box.label(text=bone.platformName)
             row = box.row(align = True)
             if props.rigType == "Custom":
                 row.prop(bone,"platformBoneFunction")
             else:
-                row.label("Platform Function: "+str(bone.platformBoneFunction))
+                row.label(text="Platform Function: "+str(bone.platformBoneFunction))
             row.prop(bone,"platformBoneTarget")
             box.prop(bone,"platformTracking")
                 

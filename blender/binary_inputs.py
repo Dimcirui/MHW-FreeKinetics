@@ -173,7 +173,7 @@ class InputEditorSet(bpy.types.Operator):
 class ChannelDisplayItems(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         row = layout.row(align=True)
-        row.label("%d"%item.time)
+        row.label(text="%d"%item.time)
         row.prop(item,"buffered")
         row.prop(item,"active")
     def invoke(self, context, event):
@@ -220,7 +220,7 @@ class TIMLControllerObjectPanel(bpy.types.Panel):
         for ix,keyframe_channel in enumerate(input_editor.inputs):
             if input_editor.show_unused or not keyframe_channel.hide:
                 col = layout.column(align=True)
-                col.label("%s[%d] - %s"%(input_editor.datapath,ix,displayBinaryOffset(ix)))
+                col.label(text="%s[%d] - %s"%(input_editor.datapath,ix,displayBinaryOffset(ix)))
                 col.template_list("ChannelDisplayItems", "freehk_inputs_grid_list", keyframe_channel, "keyframes", 
                                      keyframe_channel, "index")
                 #Display the whole list here
@@ -264,7 +264,7 @@ def unregister():
     col = layout.column(align=True)
     for i in range(8):
         row = col.row(align=True)
-        row.label("Prop %d"%i)
+        row.label(text="Prop %d"%i)
         row.prop(context.scene.freehk_binary,"bool_test",index = 2*i,text = "")
         row.prop(context.scene.freehk_binary,"bool_test",index = 2*i+1,text = "")
 """

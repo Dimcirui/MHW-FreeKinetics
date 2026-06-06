@@ -8,7 +8,7 @@ import bpy
 from .timl_param_utils import timlNameToProp,timlPropToName
 from .blenderOps import (customizeFCurve,foldFCurve,addKeyframe,getActions,fetchFreeHKCustom,
                         updateDopesheet,setEncodingType,setMaxEncoding,fetchEncodingType,
-                        previewStrip,rescaleAnimation)
+                        previewStrip,rescaleAnimation,matchBoneId)
 from .tetherOps import (transferTether, updateAnimationNames,updateAnimationBoneFunctions,
                         completeMissingChannels,synchronizeKeyframes,resampleAction,resampleFCurve,
                         getBoneFromPath,boneFunctionId)
@@ -61,9 +61,19 @@ class FoldFCurve(FCurveOperator):
     bl_label = "Fold Selected F-Curves"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Fold F-Curve generating a clone of channels for it."
-    
+
     action: bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
     operation = foldFCurve
+
+
+class MatchBoneId(FCurveOperator):
+    bl_idname = "freehk.match_bone_id"
+    bl_label = "Match Selected F-Curves' Bone ID"
+    bl_options = {'REGISTER', 'PRESET', 'UNDO'}
+    bl_description = "Set each selected F-Curve's Bone ID to the trailing number of its bone name (e.g. MhBone_083 -> 83)"
+
+    action: bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
+    operation = matchBoneId
     
 
 class _TransferTether():
@@ -344,7 +354,7 @@ class RescaleAnimation(bpy.types.Operator):
         return {'FINISHED'}
         
 classes = [
-    CreateFCurve,FoldFCurve,AddKeyframes,TransferTether,TransferTetherSilent,ClearTether,UpdateBoneFunctions,UpdateAnimationNames,
+    CreateFCurve,FoldFCurve,MatchBoneId,AddKeyframes,TransferTether,TransferTetherSilent,ClearTether,UpdateBoneFunctions,UpdateAnimationNames,
     CompleteChannels,SynchronizeKeyframes,ResampleFCurve,ResampleSelectedFCurve,GlobalEnableFCurves,CheckActionForExport,
     ResampleSelectedTIMLFCurve, ClearEncoding, MaximizeQuality, PreviewActionsInStrip, RescaleAnimation
 ]

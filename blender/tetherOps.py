@@ -8,23 +8,18 @@ import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Matrix,Vector,Quaternion,Euler
-from .blenderOps import breakPath,transformSize,setBoneFunction,fetchBoneFunction,replaceBoneName,customizeFCurve
-import re
+from .blenderOps import breakPath,transformSize,setBoneFunction,fetchBoneFunction,replaceBoneName,customizeFCurve,boneNameToId
 
-_MHBONE_NAME_RE = re.compile(r'^MhBone_(\d+)$')
 def boneFunctionId(b):
     """MHW bone-function id for an armature bone (PoseBone or Bone), or None.
-    Supports the legacy mod3 importer (integer 'boneFunction' custom property)
-    and the 3.x+ importer's 'MhBone_<id>' naming convention."""
+    Priority: legacy 'boneFunction' custom property, then bone-name parsing
+    (MhBone_083 / bonefunction_083 / BoneFunction.083)."""
     if "boneFunction" in b:
         return b["boneFunction"]
     bone = getattr(b, "bone", None)
     if bone is not None and "boneFunction" in bone:
         return bone["boneFunction"]
-    m = _MHBONE_NAME_RE.match(b.name)
-    if m:
-        return int(m.group(1))
-    return None
+    return boneNameToId(b.name)
 
 class FreeHK_IncompleteFCurve(Exception):
     # Constructor or Initializer 

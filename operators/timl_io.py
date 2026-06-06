@@ -26,10 +26,6 @@ importPropSetup.append("""advanced_remap: bpy.props.BoolProperty(name = "Estimat
                                             default = True)""")
 for (bname,pname),default in zip(props,defaults):
     importPropSetup.append('%s: EnumProperty(name = "%s",items = geometryitems,default = "%s")'%(bname,pname,default))
-importPropSetup.append("""clear_scene: BoolProperty(
-        name = "Clear actions before import.",
-        description = "Clears all actions and the animation tree before importing",
-        default = True)""")
 importPropSetup.append("""reuse_tree: BoolProperty(
         name = "Use Selected Tree",
         description = "Uses currently selected tree for importing.",
@@ -52,7 +48,6 @@ def parseRemap(settings):
 class ImporterBase():
     def draw(self,context):
         layout = self.layout
-        layout.prop(self,"clear_scene")
         layout.prop(self,"reuse_tree")
         layout.prop(self,"advanced_remap")
         if not self.advanced_remap:
@@ -64,8 +59,6 @@ class ImporterBase():
         bpy.context.scene.frame_start = 0
         bpy.context.scene.frame_end = 1
         if self.filepath:
-            if self.clear_scene:
-                nOps.clearScene()
             if self.reuse_tree:
                 tree = nOps.getCurrentTree(self.hide)
             else:

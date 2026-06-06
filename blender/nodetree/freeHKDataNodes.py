@@ -119,8 +119,8 @@ class LMTEntryNode(FreeHKNode,Node):
     #transVec = bpy.props.FloatVectorProperty(size=3,name="Trans",subtype = 'TRANSLATION')
     #quatLerpVec = bpy.props.FloatVectorProperty(size=4,name="Quat",subtype = 'QUATERNION')
     loopFrame: bpy.props.IntProperty(name="Looping Frame",default = 0  )
-    byteflag = bpy.props.BoolVectorProperty(size=8,name="Flags")
-    byteflag2 = bpy.props.BoolVectorProperty(size=8,name="Flags")
+    byteflag: bpy.props.BoolVectorProperty(size=8,name="Flags")
+    byteflag2: bpy.props.BoolVectorProperty(size=8,name="Flags")
     def init(self, context):
         self.freehkStyle()
         #self.inputs.new('CustomSocketType', "Hello")

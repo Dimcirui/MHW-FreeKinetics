@@ -6,7 +6,7 @@ Created on Mon Mar 15 03:11:41 2021
 """
 
 import bpy
-from .blenderOps import armaturePoll,getActiveAction,fetchFreeHKCustom
+from .blenderOps import armaturePoll,getActiveAction,fetchFreeHKCustom,setBoneFunction,setEncodingType
 from .timl_controller import timl_properties,timl_propmap, geometryitems
 from .timl_param_utils import timelineitems,timelineToDatatype
 from ..ui.HKIcons import pcoll
@@ -162,7 +162,7 @@ def timlMapSettings(context,layout,action):
     row = col.row(align=True)
     row.operator("freehk.resample_timl_fcurve", icon_value=pcoll["FREEHK_RESAMPLE"].icon_id, text="Resample Selected")
     action = getActiveAction(context)
-    row.prop(action.freehk,"resampleRate","")
+    row.prop(action.freehk,"resampleRate",text="")
     col.operator("freehk.rescale_animation", icon_value=pcoll["FREEHK_RESAMPLE"].icon_id, text="Rescale Animation")
     
     
@@ -181,8 +181,8 @@ def lmtMapSettings(context,layout,action):
     row = layout.row(align=True)
     row.prop(action.freehk,"fold",expand=True) 
     r = layout.row(align=True)
-    r.label("Tethered Armature: ")
-    r.label(str(action.freehk.tetherFrame.name) if action.freehk.tetherFrame else "None")
+    r.label(text="Tethered Armature: ")
+    r.label(text=str(action.freehk.tetherFrame.name) if action.freehk.tetherFrame else "None")
     layout.operator("freehk.rescale_animation", icon_value=pcoll["FREEHK_RESAMPLE"].icon_id, text="Rescale Animation")
     
 
@@ -221,12 +221,12 @@ class ActionDataTools(bpy.types.Panel):
         layout.prop(action.freehk,"starType",text = "FreeHK Action Type")
         if action.freehk.starType == "TIML_Action":
             #layout.separator()
-            #layout.label("FreeHK TIML Paramaters")
+            #layout.label(text="FreeHK TIML Paramaters")
             layout.prop(action.freehk,"timelineParam",text = "FreeHK Timeline Type")
             layout.prop(action.freehk,"unkn0",text = "FreeHK Unknown Parameter")
             
             col = layout.column(align = True)
-            col.label("Property Export Order")
+            col.label(text="Property Export Order")
             row = col.row()
             row.prop(action.freehk,"timl_reorder",expand=True) 
             
@@ -298,7 +298,7 @@ class ActionTools(LMTPanel,bpy.types.Panel):
                 l.prop(context.scene,"freehk_tether",text = "")#,text = "Transfer Target")
             if tool == "resample_action":
                 action = getActiveAction(context)
-                l.prop(action.freehk,"resampleRate","")
+                l.prop(action.freehk,"resampleRate",text="")
             
 class FCurveData(bpy.types.PropertyGroup):
     starType: bpy.props.EnumProperty(name = "Type",
@@ -393,18 +393,20 @@ class FCurveTools(LMTPanel,bpy.types.Panel):
             add = col.operator("freehk.add_keyframes",icon_value=pcoll["FREEHK_ERR_FIX"].icon_id)
             add.action = bpy.data.actions.find(action.name)
             fold = col.operator("freehk.fold_fcurve",text = "Fold Selected F-Curves",icon_value=pcoll["FREEHK_ERR_ERROR"].icon_id)
-            fold.action = bpy.data.actions.find(action.name)            
+            fold.action = bpy.data.actions.find(action.name)
+            match = col.operator("freehk.match_bone_id",text = "Match Selected F-Curves' Bone ID",icon_value=pcoll["FREEHK"].icon_id)
+            match.action = bpy.data.actions.find(action.name)
             for fi,fcurve in enumerate(action.fcurves):
                 if fcurve.select:
                     box = layout.box()
                     col = box.column(align = True)
-                    col.label("%s F-Curve"%actionDataPath(fcurve))
+                    col.label(text="%s F-Curve"%actionDataPath(fcurve))
                     modified = False
                     mod = fetchFreeHKCustom(fcurve)
                     if mod:
-                        col.label(encodingName(round(mod.min_x)))
-                        col.prop(mod,"min_x",text = "Encoding Type" )
-                        col.prop(mod,"min_y",text = "Bone Function")
+                        col.label(text=encodingName(round(mod.min_x)))
+                        col.prop(fcurve,"freehk_encoding",text = "Encoding Type")
+                        col.prop(fcurve,"freehk_bone_id",text = "Bone ID")
                         modified = True
                     if not modified:
                         creator = col.operator("freehk.create_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
@@ -437,11 +439,11 @@ class KeyframeTools(bpy.types.Panel):
                             path = actionDataPath(fcurve)
                         else:
                             path = nameDataPath(fcurve)
-                        col.label("%s Keyframe [%d]"%(path,p.co[0]))
+                        col.label(text="%s Keyframe [%d]"%(path,p.co[0]))
                         if action.freehk.starType == "TIML_Action":
                             col.prop(p, "interpolation", text="FreeHK Interpolation")
                         row = col.row(align=True)
-                        row.label("FreeHK Frame Value")
+                        row.label(text="FreeHK Frame Value")
                         row.prop(p,"co",index=0,text="Time")
                         row.prop(p,"co",index=1,text="Value")
                         if action.freehk.starType == "TIML_Action":
@@ -472,6 +474,18 @@ classes = [
     AnimData,ActionTools,FCurveData,KeyframeData,ActionDataTools,FCurveTools,KeyframeTools,TIMLControllerObjectPanel,
 ]
 
+# Integer-typed proxies over the FreeHK F-Curve modifier (min_x/min_y are floats in RNA).
+def _get_encoding(self):
+    mod = fetchFreeHKCustom(self)
+    return int(round(mod.min_x)) if mod else 0
+def _set_encoding(self, value):
+    setEncodingType(self, value)
+def _get_bone_id(self):
+    mod = fetchFreeHKCustom(self)
+    return int(round(mod.min_y)) if mod else -2
+def _set_bone_id(self, value):
+    setBoneFunction(self, value)
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -479,8 +493,12 @@ def register():
     bpy.types.Scene.freehk_showall =  bpy.props.BoolProperty(name = "Display All",default = False)
     bpy.types.Scene.freehk_tether =  bpy.props.PointerProperty(name = "Tether Target",type = bpy.types.Object,poll = armaturePoll)
     bpy.types.Scene.freehk_limit =  bpy.props.BoolProperty(name = "Limit Operator",default = True)
-    
+    bpy.types.FCurve.freehk_encoding = bpy.props.IntProperty(name = "Encoding Type", get = _get_encoding, set = _set_encoding)
+    bpy.types.FCurve.freehk_bone_id = bpy.props.IntProperty(name = "Bone ID", get = _get_bone_id, set = _set_bone_id)
+
 def unregister():
+    del bpy.types.FCurve.freehk_bone_id
+    del bpy.types.FCurve.freehk_encoding
     del bpy.types.Scene.freehk_limit
     del bpy.types.Scene.freehk_tether
     del bpy.types.Scene.freehk_showall

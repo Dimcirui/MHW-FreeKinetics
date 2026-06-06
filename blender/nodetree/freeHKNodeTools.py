@@ -154,7 +154,7 @@ class ActionToolsNodes(bpy.types.Panel):
             if "transform_tether" in tool:
                 l.prop(context.scene,"freehk_tether",text = "")#,text = "Transfer Target")
             if tool == "resample_action":
-                l.prop(bpy.context.scene,"freehk_node_resample","")
+                l.prop(bpy.context.scene,"freehk_node_resample",text="")
         c.operator("freehk.rescale_animation_node",
                    icon_value=pcoll["FREEHK_RESAMPLE_TOTAL"].icon_id, 
                    text="Rescale Animation")
@@ -208,7 +208,7 @@ class TreeTools(bpy.types.Panel):
             context.space_data.node_tree.bl_idname == 'FreeHKNodeTree'# and context.scene.node_tree
     
     def draw(self,context):
-        self.layout.label("Export Tools")
+        self.layout.label(text="Export Tools")
         col = self.layout.column(align=True)
         col.operator("freehk.export",icon_value=pcoll["FREEHK_FILE"].icon_id,text="Export All")
         col.operator("freehk.export",icon_value=pcoll["FREEHK_SELECTED_FILE"].icon_id,text="Export Selected").mode="selected"
@@ -218,7 +218,7 @@ class TreeTools(bpy.types.Panel):
         col.separator()
         row = col.row(align=True)
         row.operator("freehk.goto",icon_value = pcoll["FREEHK"].icon_id,text="Go to Entry")
-        row.prop(context.scene,"freehk_node_goto","")
+        row.prop(context.scene,"freehk_node_goto",text="")
         
 def node_pulldown(self, context):
     if context.space_data.tree_type == 'FreeHKNodeTree':
