@@ -31,6 +31,7 @@ class FreeHKOutputNode(FreeHKNode):
     exec(outputProps)
     addon_key = __package__.split('.')[0]
     def init(self, context):
+        self.freehkStyle()
         inx = self.inputs.new(self.inputType, self.inputName, identifier=self.inputStr)
         inx.link_limit = 0
     # Additional buttons displayed on the node.
@@ -148,14 +149,14 @@ class LMTFileNode(Node, FreeHKOutputNode):
     bl_label = "LMT Output Node"
     bl_icon = 'GREASEPENCIL'
 
-    filepath = bpy.props.StringProperty(
+    filepath: bpy.props.StringProperty(
         name = "Path",
         description = "Path to the file to export",
         default = "",
         subtype = 'FILE_PATH'
         )
-    entryCount = bpy.props.IntProperty(name="Entry Count", default = -1)
-    inject = bpy.props.BoolProperty(name="Inject",description="Inject into a file instead of exporting",default = False)
+    entryCount: bpy.props.IntProperty(name="Entry Count", default = -1)
+    inject: bpy.props.BoolProperty(name="Inject",description="Inject into a file instead of exporting",default = False)
     exec(outputProps)
 
     inputType = "FreeHKAnimationEntrySocket"
@@ -175,13 +176,13 @@ class TIMLFileNode(Node, FreeHKOutputNode):
     bl_label = "TIML Output Node"
     bl_icon = 'GREASEPENCIL'
 
-    filepath = bpy.props.StringProperty(
+    filepath: bpy.props.StringProperty(
         name = "Path",
         description = "Path to the file to export",
         default = "",
         subtype = 'FILE_PATH'
         )
-    entryCount = bpy.props.IntProperty(name="Entry Count", default = -1)
+    entryCount: bpy.props.IntProperty(name="Entry Count", default = -1)
     inject = False
     exec(outputProps)
 
@@ -201,13 +202,13 @@ class EFXFileNode(Node, FreeHKOutputNode):
     bl_icon = 'GREASEPENCIL'
     exec(outputProps)
 
-    filepath = bpy.props.StringProperty(
+    filepath: bpy.props.StringProperty(
         name = "Path",
         description = "Path to the file to export",
         default = "",
         subtype = 'FILE_PATH'
         )
-    inject = bpy.props.BoolProperty(name="Inject",description="Inject into a file instead of exporting",default = False)
+    inject: bpy.props.BoolProperty(name="Inject",description="Inject into a file instead of exporting",default = False)
     inputType = "FreeHKEFXEntrySocket"
     inputName = "EFX Entry"
     inputStr = "EFX_Entry"
@@ -234,13 +235,14 @@ class JSONFileNode(Node,FreeHKOutputNode):
     bl_idname = 'JSONFileNode'
     bl_label = "JSON Output Node"
     bl_icon = 'GREASEPENCIL'
-    filepath = bpy.props.StringProperty(
+    filepath: bpy.props.StringProperty(
         name = "Path",
         description = "Path to the file to export",
         default = "",
         subtype = 'FILE_PATH'
         )
     def init(self, context):
+        self.freehkStyle()
         self.inputs.new("FreeHKGenericSocket","Action, Data or Entry")#
     def draw_buttons(self, context, layout):
         layout.prop(self, "filepath")

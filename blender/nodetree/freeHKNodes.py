@@ -39,10 +39,11 @@ def globalCacheClear():
         del structureCache[key]
 
 class FreeHKNode:
-    def __init__(self,*args,**kwargs):
+    # Blender 2.8+: overriding __init__ on a Node is unsupported (the StructRNA is
+    # invalidated before __init__ runs). Apply node styling from init() instead.
+    def freehkStyle(self):
         self.use_custom_color = True
         self.color = colorpick(self.bl_idname)
-        super().__init__(*args,**kwargs)
     @classmethod
     def poll(cls, ntree):
         return ntree.bl_idname == 'FreeHKNodeTree'

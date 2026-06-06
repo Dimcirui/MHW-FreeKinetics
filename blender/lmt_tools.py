@@ -107,50 +107,50 @@ def foldUpdate(self,context):
         
 class AnimData(bpy.types.PropertyGroup):
     #nextAction = bpy.props.PointerProperty(name = "Next Animation", type="Action")    
-    starType = bpy.props.EnumProperty(name = "Type",
+    starType: bpy.props.EnumProperty(name = "Type",
                                       items = [("None","None","Non MHW Action",pcoll["FREEHK_NONE_TYPE"].icon_id,0),
                                                ("LMT_Action","LMT","MHW Bone Action",pcoll["FREEHK_LMT_TYPE"].icon_id,1),
                                                ("TIML_Action","TIML","MHW TIML Action",pcoll["FREEHK_TIML_TYPE"].icon_id,2)],
                                       default = "None",
                                       update = TIMLControllerCreation)
-    timelineParam = bpy.props.EnumProperty(name = "Timeline Type",
+    timelineParam: bpy.props.EnumProperty(name = "Timeline Type",
                                       items = timelineitems,
                                       default = "None")
-    unkn0 = bpy.props.IntProperty(name = "Unknown",
+    unkn0: bpy.props.IntProperty(name = "Unknown",
                                   default = 0)
     
-    transx = bpy.props.EnumProperty(name = "Translation X Map",items = geometryitems,default = "m8E8AFE06")
-    transy = bpy.props.EnumProperty(name = "Translation Y Map",items = geometryitems,default = "mF98DCE90")
-    transz = bpy.props.EnumProperty(name = "Translation Z Map",items = geometryitems,default = "m60849F2A")
-    rotx = bpy.props.EnumProperty(name = "Rotation X Map",items = geometryitems,default = "mF105BBE3")
-    roty = bpy.props.EnumProperty(name = "Rotation Y Map",items = geometryitems,default = "m86028B75")
-    rotz = bpy.props.EnumProperty(name = "Rotation Z Map",items = geometryitems,default = "m1F0BDACF")
+    transx: bpy.props.EnumProperty(name = "Translation X Map",items = geometryitems,default = "m8E8AFE06")
+    transy: bpy.props.EnumProperty(name = "Translation Y Map",items = geometryitems,default = "mF98DCE90")
+    transz: bpy.props.EnumProperty(name = "Translation Z Map",items = geometryitems,default = "m60849F2A")
+    rotx: bpy.props.EnumProperty(name = "Rotation X Map",items = geometryitems,default = "mF105BBE3")
+    roty: bpy.props.EnumProperty(name = "Rotation Y Map",items = geometryitems,default = "m86028B75")
+    rotz: bpy.props.EnumProperty(name = "Rotation Z Map",items = geometryitems,default = "m1F0BDACF")
     #rotqw = bpy.props.EnumProperty(name = "Rotation QW Map",items = geometryitems,default = "")
     #rotqx = bpy.props.EnumProperty(name = "Rotation QX Map",items = geometryitems,default = "")
     #rotqy = bpy.props.EnumProperty(name = "Rotation QY Map",items = geometryitems,default = "")
     #rotqz = bpy.props.EnumProperty(name = "Rotation QZ Map",items = geometryitems,default = "")
-    sclx = bpy.props.EnumProperty(name = "Scale X Map",items = geometryitems,default = "m9486DF23")
-    scly = bpy.props.EnumProperty(name = "Scale Y Map",items = geometryitems,default = "mE381EFB5")
-    sclz = bpy.props.EnumProperty(name = "Scale Z Map",items = geometryitems,default = "m7A88BE0F")
+    sclx: bpy.props.EnumProperty(name = "Scale X Map",items = geometryitems,default = "m9486DF23")
+    scly: bpy.props.EnumProperty(name = "Scale Y Map",items = geometryitems,default = "mE381EFB5")
+    sclz: bpy.props.EnumProperty(name = "Scale Z Map",items = geometryitems,default = "m7A88BE0F")
     #on update to TIML_Action remember to look for the TIML controller and
     #if it doesn't exist create it
     
     #animType = bpy.props.EnumProperty(name = "LMT Buffer Type",items = bufferitems,default = "None")
     #this is an fcurve property
     
-    resample = bpy.props.BoolProperty(name = "Resample", description = "Add additional keyframes to have more control over exported animations", default = False)
-    resampleRate = bpy.props.IntProperty(name = "Resample Rate", description = "Frequency on which to resample the animation. -1 for Dynamic Resampling", default = 1, min = 1)
+    resample: bpy.props.BoolProperty(name = "Resample", description = "Add additional keyframes to have more control over exported animations", default = False)
+    resampleRate: bpy.props.IntProperty(name = "Resample Rate", description = "Frequency on which to resample the animation. -1 for Dynamic Resampling", default = 1, min = 1)
     #Beats the F6 monstrosities for applying actions, add resample button
     
-    fold = bpy.props.EnumProperty(name = "Folded Animation",items = [("MAIN","MAIN",""),("FOLDED","FOLDED","")],default = "MAIN", update = foldUpdate )
+    fold: bpy.props.EnumProperty(name = "Folded Animation",items = [("MAIN","MAIN",""),("FOLDED","FOLDED","")],default = "MAIN", update = foldUpdate )
     #loopFrame = bpy.props.IntProperty(name="Loop Frame")
-    frameCount = bpy.props.IntProperty(name="Frame Count",default = -1,min = -1)
-    tetherFrame = bpy.props.PointerProperty(name="Tether Armature",type = bpy.types.Object,poll = armaturePoll)
-    timl_reorder = bpy.props.EnumProperty(name = "TIML Order",items = [("BLENDER","BLENDER",""),("GAME","GAME","")],default = "BLENDER")
+    frameCount: bpy.props.IntProperty(name="Frame Count",default = -1,min = -1)
+    tetherFrame: bpy.props.PointerProperty(name="Tether Armature",type = bpy.types.Object,poll = armaturePoll)
+    timl_reorder: bpy.props.EnumProperty(name = "TIML Order",items = [("BLENDER","BLENDER",""),("GAME","GAME","")],default = "BLENDER")
 
 class KeyframeData(bpy.types.PropertyGroup):
     #lControl, rControl, interpolationMethod
-    interpolationMethod = bpy.props.IntProperty(name="Interpolation Control", default = 2)
+    interpolationMethod: bpy.props.IntProperty(name="Interpolation Control", default = 2)
 
 def timlMapSettings(context,layout,action):
     col = layout.column(align=True)
@@ -188,7 +188,7 @@ def lmtMapSettings(context,layout,action):
 
 class ActionDataTools(bpy.types.Panel):
     bl_category = "MHW FreeHK"
-    bl_idname = "panel.action_props"
+    bl_idname = "FREEHK_PT_action_props"
     bl_label = "Action Data"
     bl_space_type = "DOPESHEET_EDITOR"
     bl_region_type = "UI"
@@ -267,7 +267,7 @@ lmtIcons = ["FREEHK_CLEAR","FREEHK_TRANSFER_SILENT","FREEHK_TRANSFER","FREEHK_NA
 
 class ActionTools(LMTPanel,bpy.types.Panel):
     bl_category = "MHW FreeHK"
-    bl_idname = "panel.action_tools"
+    bl_idname = "FREEHK_PT_action_tools"
     bl_label = "Action Tools"
     bl_space_type = "DOPESHEET_EDITOR"
     bl_region_type = "UI"
@@ -301,7 +301,7 @@ class ActionTools(LMTPanel,bpy.types.Panel):
                 l.prop(action.freehk,"resampleRate","")
             
 class FCurveData(bpy.types.PropertyGroup):
-    starType = bpy.props.EnumProperty(name = "Type",
+    starType: bpy.props.EnumProperty(name = "Type",
                                       items = [("1","Float Vector Base","Base Absolute Transform"),
                                                 ("2","Float Rotation Key","Pure Quaternion Values"),
                                                 ("3","Float Vector Key","Pure 3D Values"),
@@ -318,7 +318,7 @@ class FCurveData(bpy.types.PropertyGroup):
                                                 ("8","Reference Frame","Reference Frame for corresponding delta transform"),
                                                 ],
                                       default = "0",)
-    boneFunction = bpy.props.IntProperty(name = "Bone Function",description = "Bone Function ID")  
+    boneFunction: bpy.props.IntProperty(name = "Bone Function",description = "Bone Function ID")  
 
 stringmap = {"location":"Location",
              "rotation_euler":"Euler Rotation",
@@ -371,7 +371,7 @@ def encodingName(ix):
 
 class FCurveTools(LMTPanel,bpy.types.Panel):
     bl_category = "MHW FreeHK"
-    bl_idname = "panel.fcurve_props"
+    bl_idname = "FREEHK_PT_fcurve_props"
     bl_label = "F-Curve Data"
     bl_space_type = "DOPESHEET_EDITOR"
     bl_region_type = "UI"
@@ -417,7 +417,7 @@ class FCurveTools(LMTPanel,bpy.types.Panel):
 
 class KeyframeTools(bpy.types.Panel):
     bl_category = "MHW FreeHK"
-    bl_idname = "panel.keyframe_props"
+    bl_idname = "FREEHK_PT_keyframe_props"
     bl_label = "Keyframe Data"
     bl_space_type = "DOPESHEET_EDITOR"
     bl_region_type = "UI"

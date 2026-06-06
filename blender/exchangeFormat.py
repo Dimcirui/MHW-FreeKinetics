@@ -266,8 +266,9 @@ class ExchangeFormat():
         _,mapping = self.traverseHierarchy(rootBone,callback)
         self.assignSkeleton(skeleton,mapping)
     def parseSkeletonFunctions(self,skeleton):
+        from .tetherOps import boneFunctionId
         keyf = lambda x: x.name
-        valf = lambda x,i: x["boneFunction"] if "boneFunction" in x else -1
+        valf = lambda x,i: (boneFunctionId(x) if boneFunctionId(x) is not None else -1)
         def callback(root,index,mapping):
             mapping[keyf(root)] = valf(root,index)
         rootBone = self.getSkeletonRoot(skeleton)

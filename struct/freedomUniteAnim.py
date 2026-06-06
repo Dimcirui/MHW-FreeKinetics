@@ -442,10 +442,10 @@ if blender:
     def unregister():
         for cls in classes:
             bpy.utils.unregister_class(cls)
-        if menu_func_import_mhfu in bpy.types.TOPBAR_MT_file_export:
-            bpy.types.TOPBAR_MT_file_export.remove(menu_func_import_mhfu)
-        # if menu_func_export_mhfu in bpy.types.INFO_MT_file_export:
-        #    bpy.types.INFO_MT_file_export.remove(menu_func_export_mhfu)
+        try:
+            bpy.types.TOPBAR_MT_file_import.remove(menu_func_import_mhfu)
+        except (ValueError, AttributeError):
+            pass
 
 
 if __name__ in "__main__":

@@ -178,7 +178,7 @@ class disablePL(bpy.types.Operator):
     
 class PLTools(bpy.types.Panel):
     bl_category = "MHW Tools"
-    bl_idname = "panel.mhw_pl"
+    bl_idname = "FREEHK_PT_mhw_pl"
     bl_label = "PL Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -192,8 +192,8 @@ class PLTools(bpy.types.Panel):
         col.operator("pl_tools.update_pl", icon='PLAY', text="Update PL Links")
         col = self.layout.column(align = True)
         row = col.row(align = True)
-        row.operator('pl_tools.disable_pl', icon='VISIBLE_IPO_OFF',text = 'Free')
-        row.operator('pl_tools.enable_pl', icon='VISIBLE_IPO_ON',text = 'Link')
+        row.operator('pl_tools.disable_pl', icon='UNLINKED',text = 'Free')
+        row.operator('pl_tools.enable_pl', icon='LINKED',text = 'Link')
 
 
 classes = [ImportPL, ExportPL, createPL, selectionPL, updatePL, enablePL, disablePL, PLTools]

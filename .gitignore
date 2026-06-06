@@ -5,6 +5,13 @@ __pycache__/
 
 app_license/
 
+# Local packaging staging copy + built zip (see MIGRATION_PLAN.md)
+/MHW-Free-HyperKinetics/
+/MHW-Free-HyperKinetics.zip
+
+# Local test assets (game files) + harness output
+/test_files/
+
 # C extensions
 *.so
 

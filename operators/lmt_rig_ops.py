@@ -8,7 +8,7 @@ import bpy
 from bpy.app.handlers import persistent
 from mathutils import Vector
 from ..blender.blenderOps import fetchBoneFunction,animationLength,completeBasis
-from ..blender.tetherOps import updateAnimationBoneFunctions
+from ..blender.tetherOps import updateAnimationBoneFunctions,boneFunctionId
 from ..ui.HKIcons import pcoll
 # Left Leg Orientation and IK
 # 250 -> 16
@@ -33,26 +33,26 @@ def getMHWArmatures(self,context):
 
 class RigTransferData(bpy.types.PropertyGroup):
     #nextAction = bpy.props.PointerProperty(name = "Next Animation", type="Action")    
-    rigType = bpy.props.EnumProperty(name = "Rig Type",
+    rigType: bpy.props.EnumProperty(name = "Rig Type",
                                       items = [("Humanoid","Humanoid","Humanoid Rig"),#,pcoll["FREEHK_PL"].icon_id,0),
                                                ("Monster2","Biped Monster","Biped Monster"),#,pcoll["FREEHK_EM2"].icon_id,1),
                                                ("Monster4","Quadruped Monster","Quadruped Monster"),#,pcoll["FREEHK_EM4"].icon_id,2),
                                                ("Custom","Generic Rig","Generic Rig"),#,pcoll["FREEHK_Custom"].icon_id,3),
                                                ],
                                       default = "Humanoid")
-    cat = bpy.props.BoolProperty(name = "CAT Rig", description = "Perform CAT Normalization Operations",default = False)                               
-    byname = bpy.props.BoolProperty(name = "Transfer by Name", description = "Transfer Animation based on Bone Names (instead of bone functions)",default = False)
-    sourceName = bpy.props.EnumProperty(name = "Source Rig", description = "Non-MHW Armature with Animation", items = getRigs)
-    targetName = bpy.props.EnumProperty(name = "Target Rig", description = "MHW Armature to bake Animation into", items = getMHWArmatures) 
-    bake = bpy.props.BoolProperty(name = "Bake",default = True)
-    groundRoot = bpy.props.BoolProperty(name = "Root as Ground Level", description = "Set the Root as the ground level after baking",default = True)
+    cat: bpy.props.BoolProperty(name = "CAT Rig", description = "Perform CAT Normalization Operations",default = False)                               
+    byname: bpy.props.BoolProperty(name = "Transfer by Name", description = "Transfer Animation based on Bone Names (instead of bone functions)",default = False)
+    sourceName: bpy.props.EnumProperty(name = "Source Rig", description = "Non-MHW Armature with Animation", items = getRigs)
+    targetName: bpy.props.EnumProperty(name = "Target Rig", description = "MHW Armature to bake Animation into", items = getMHWArmatures) 
+    bake: bpy.props.BoolProperty(name = "Bake",default = True)
+    groundRoot: bpy.props.BoolProperty(name = "Root as Ground Level", description = "Set the Root as the ground level after baking",default = True)
     
     
 class PlatformIKMapping(bpy.types.PropertyGroup):
-    platformName = bpy.props.StringProperty(name = "Platform Role")
-    platformBoneFunction = bpy.props.IntProperty(name = "Platform Function")
-    platformBoneTarget = bpy.props.IntProperty(name = "Target Function")
-    platformTracking = bpy.props.EnumProperty(name = "Tracking Type",
+    platformName: bpy.props.StringProperty(name = "Platform Role")
+    platformBoneFunction: bpy.props.IntProperty(name = "Platform Function")
+    platformBoneTarget: bpy.props.IntProperty(name = "Target Function")
+    platformTracking: bpy.props.EnumProperty(name = "Tracking Type",
                                       items = [("Ground","Ground Shadow","Follows another bone at flat ground level (used for feet)"),
                                                ("Translation","Translation","Follows another bone position but not rotation (used for neck)"),
                                                ("Rotation","Rotation","Follows another bone's rotation (not used by platforms)"),
@@ -60,20 +60,20 @@ class PlatformIKMapping(bpy.types.PropertyGroup):
                                                ])
 
 class PlatformGroup(bpy.types.PropertyGroup):
-    bone_presets = bpy.props.CollectionProperty(type=PlatformIKMapping)    
+    bone_presets: bpy.props.CollectionProperty(type=PlatformIKMapping)    
 
 
 class PlatformSingleton(bpy.types.PropertyGroup):
-    presets = bpy.props.CollectionProperty(type=PlatformGroup)
+    presets: bpy.props.CollectionProperty(type=PlatformGroup)
 
 def setDefaultCollectionValue():
     registerPresetRigOps(bpy.context.scene.freehk_rig_ops_platform)
 
-def onRegister(scene):
+def onRegister(scene, depsgraph=None):
     setDefaultCollectionValue()
     # the handler isn't needed anymore, so remove it
     try:
-        bpy.app.handlers.scene_update_post.remove(onRegister)    
+        bpy.app.handlers.depsgraph_update_post.remove(onRegister)    
     except:
         pass
 
@@ -96,7 +96,7 @@ def registerPresetRigOps(platformCollection):
 
 class RigTransferTools(bpy.types.Panel):
     bl_category = "MHW Tools"
-    bl_idname = "panel.rig_props"
+    bl_idname = "FREEHK_PT_rig_props"
     bl_label = "Rig Transfer Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -254,11 +254,7 @@ def muteGlobal(catAction):
             fcurve.mute = True
 
 def getBoneFunction(bone):
-    if "boneFunction" in bone:
-        return bone["boneFunction"]
-    if "boneFunction" in bone.bone:
-        return bone.bone["boneFunction"]
-    return None
+    return boneFunctionId(bone)
 
 
 trackerName = "__Animation_Tracker_Bone__"
@@ -685,7 +681,7 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.Scene.freehk_rig_ops = bpy.props.PointerProperty(type=RigTransferData)
     bpy.types.Scene.freehk_rig_ops_platform = bpy.props.PointerProperty(type=PlatformSingleton)
-    bpy.app.handlers.scene_update_post.append(onRegister)
+    bpy.app.handlers.depsgraph_update_post.append(onRegister)
     bpy.app.handlers.load_post.append(onFileLoaded)
     
 def unregister():

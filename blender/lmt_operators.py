@@ -11,7 +11,7 @@ from .blenderOps import (customizeFCurve,foldFCurve,addKeyframe,getActions,fetch
                         previewStrip,rescaleAnimation)
 from .tetherOps import (transferTether, updateAnimationNames,updateAnimationBoneFunctions,
                         completeMissingChannels,synchronizeKeyframes,resampleAction,resampleFCurve,
-                        getBoneFromPath)
+                        getBoneFromPath,boneFunctionId)
 from .lmt_exporter import LMTActionParser
 from ..error_handling.errorController import DebugVerifier
 from .lmt_tools import encodingTypes
@@ -23,12 +23,12 @@ class CreateFCurve(bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Customize F-Curve"
     
-    action = bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
-    fcurve = bpy.props.IntProperty(name = "FCurve",options = {'HIDDEN'})
-    starType = bpy.props.EnumProperty(name = "Type",
+    action: bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
+    fcurve: bpy.props.IntProperty(name = "FCurve",options = {'HIDDEN'})
+    starType: bpy.props.EnumProperty(name = "Type",
                                       items = encodingTypes,
                                       default = "0",)
-    boneFunction = bpy.props.IntProperty(name = "Bone Function",description = "Bone Function ID",default = -2) 
+    boneFunction: bpy.props.IntProperty(name = "Bone Function",description = "Bone Function ID",default = -2) 
     
     def execute(self,context):
         fc = bpy.data.actions[self.action].fcurves[self.fcurve]
@@ -52,7 +52,7 @@ class AddKeyframes(FCurveOperator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Add Keyframes to Selected FCurves"
     
-    action = bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
+    action: bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
     operation = addKeyframe
 
 
@@ -62,7 +62,7 @@ class FoldFCurve(FCurveOperator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Fold F-Curve generating a clone of channels for it."
     
-    action = bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
+    action: bpy.props.IntProperty(name ="Action",options = {'HIDDEN'})
     operation = foldFCurve
     
 
@@ -81,7 +81,7 @@ class TransferTetherSilent(_TransferTether,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Swap Action's LMT Tether to a new Target without modifying the animation"
 
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     addon_key = __package__.split('.')[0]
     
     def fetchTether(self,context):
@@ -106,7 +106,7 @@ class TransferTether(_TransferTether,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Swap Action's LMT Tether to a new Target"
 
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
 
     def fetchTether(self,context):
         return context.scene.freehk_tether    
@@ -117,7 +117,7 @@ class ClearTether(_TransferTether,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Clear Action's LMT Tether"
 
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
 
     def fetchTether(self,ct):
         return None 
@@ -153,7 +153,7 @@ class UpdateBoneFunctions(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Update bone functions from current tether based on name"
 
-    limit = bpy.props.BoolProperty(name = "Limit", description = "Limit to current action", default = True, options={'HIDDEN'})    
+    limit: bpy.props.BoolProperty(name = "Limit", description = "Limit to current action", default = True, options={'HIDDEN'})    
     def mappedOperator(self,armature,action):
         updateAnimationBoneFunctions(armature,action)
 
@@ -163,7 +163,7 @@ class UpdateAnimationNames(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Update animation names based on bone functions"
 
-    limit = bpy.props.BoolProperty(name = "Limit", description = "Limit to current action", default = True, options={'HIDDEN'})
+    limit: bpy.props.BoolProperty(name = "Limit", description = "Limit to current action", default = True, options={'HIDDEN'})
     def mappedOperator(self,armature,action):
         updateAnimationNames(armature,action)
 
@@ -173,7 +173,7 @@ class CompleteChannels(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Adds missing channels to partial animations"
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         completeMissingChannels(action)
 
@@ -183,7 +183,7 @@ class SynchronizeKeyframes(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Adds missing keyframes for exporting."
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         print(action.name)
         synchronizeKeyframes(action)
@@ -194,7 +194,7 @@ class ResampleFCurve(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Adds keyframes if distance between keyframe pair larger than sample rate."
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         resampleAction(action,action.freehk.resampleRate)    
 
@@ -204,7 +204,7 @@ class ResampleSelectedFCurve(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Adds keyframes if distance between keyframe pair larger than sample rate."
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):        
         for fcurve in action.fcurves:
             if fcurve.select:
@@ -232,15 +232,12 @@ class GlobalEnableFCurves(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Enables all fcurves on action with FreeHK properties."
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         for fcurve in action.fcurves:
             if fetchFreeHKCustom(fcurve) is None:
                 pbone = getBoneFromPath(armature,fcurve.data_path)
-                if pbone and "boneFunction" in pbone:
-                    bone = pbone["boneFunction"]
-                else:
-                    bone = None
+                bone = boneFunctionId(pbone) if pbone else None
                 customizeFCurve(fcurve,0,bone if bone is not None else -2)
                 #customizeFCurve
 
@@ -250,7 +247,7 @@ class ClearEncoding(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Sets the encoding of all fcurves to automatical detection."
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         for fcurve in action.fcurves:
             setEncodingType(fcurve,0)
@@ -261,7 +258,7 @@ class MaximizeQuality(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Sets the encoding of all fcurves without a buffer on the action to the highest quality setting."
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         for fcurve in action.fcurves:
             if not fetchEncodingType(fcurve):
@@ -273,7 +270,7 @@ class CheckActionForExport(MappedActionOperator,bpy.types.Operator):
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = "Run the action through the Exporter Process to see possible errors"
     tetherless = True
-    limit = bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     addon_key = __package__.split('.')[0]
     def __init__(self,*args,**kwargs):
         self.displayed = False
@@ -316,10 +313,10 @@ class RescaleAnimation(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Rescale Animation"
 
-    scale_factor = bpy.props.FloatProperty(name = "Scale", default = 1.0)
-    start_frame = bpy.props.IntProperty(name = "Start Frame", default = 0)
-    end_frame = bpy.props.IntProperty(name = "End Frame", default = -1)
-    discretize = bpy.props.BoolProperty(name = "Discretize Keyframes", default = True)
+    scale_factor: bpy.props.FloatProperty(name = "Scale", default = 1.0)
+    start_frame: bpy.props.IntProperty(name = "Start Frame", default = 0)
+    end_frame: bpy.props.IntProperty(name = "End Frame", default = -1)
+    discretize: bpy.props.BoolProperty(name = "Discretize Keyframes", default = True)
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)

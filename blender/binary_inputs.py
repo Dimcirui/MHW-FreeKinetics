@@ -15,17 +15,17 @@ flagHash = [propName%p for p in bigFlags]
 
 class ChannelKeyframe(bpy.types.PropertyGroup):
     #name = StringProperty() -> Instantiated by default
-    time = bpy.props.IntProperty()
-    buffered = bpy.props.BoolProperty(name = "Buffered")
-    active = bpy.props.BoolProperty(name = "Active")
+    time: bpy.props.IntProperty()
+    buffered: bpy.props.BoolProperty(name = "Buffered")
+    active: bpy.props.BoolProperty(name = "Active")
     def compile(self):
         return (self.active<<1)+self.buffered
     
 
 class KeyframeChannels(bpy.types.PropertyGroup):
-    hide = bpy.props.BoolProperty(default = False)
-    index = bpy.props.IntProperty()
-    keyframes = bpy.props.CollectionProperty(type=ChannelKeyframe)
+    hide: bpy.props.BoolProperty(default = False)
+    index: bpy.props.IntProperty()
+    keyframes: bpy.props.CollectionProperty(type=ChannelKeyframe)
     def empty(self):
         for kf in self.keyframes:
             if kf.buffered or kf.active:
@@ -48,10 +48,10 @@ def bigFlagCheck(self,context):
     return result
 
 class InputEditorProperties(bpy.types.PropertyGroup):
-    datapath = bpy.props.EnumProperty( items = bigFlagCheck,name = "Input Property")
-    inputs = bpy.props.CollectionProperty(type=KeyframeChannels)
-    show_unused = bpy.props.BoolProperty(name = "Show Unused Channels", default = False)
-    update_parameters = bpy.props.BoolProperty(name = "Update FreeHK Parameter", default = True)
+    datapath: bpy.props.EnumProperty( items = bigFlagCheck,name = "Input Property")
+    inputs: bpy.props.CollectionProperty(type=KeyframeChannels)
+    show_unused: bpy.props.BoolProperty(name = "Show Unused Channels", default = False)
+    update_parameters: bpy.props.BoolProperty(name = "Update FreeHK Parameter", default = True)
 
 class InputEditorGet(bpy.types.Operator):
     bl_idname = "freehk_inputs.get"
@@ -194,7 +194,7 @@ class TIMLControllerObjectPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
-    bl_idname = 'panel.input_editor'
+    bl_idname = 'FREEHK_PT_input_editor'
     bl_label = 'Free HK Input Editing'
 
     @classmethod
@@ -226,13 +226,13 @@ class TIMLControllerObjectPanel(bpy.types.Panel):
                 #Display the whole list here
 
 
-def onRegister(scene):
+def onRegister(scene, depsgraph=None):
     for i in range(16):
         c = bpy.context.scene.freehk_input_editor.inputs.add()
         c.hide = True
     # the handler isn't needed anymore, so remove it
     try:
-        bpy.app.handlers.scene_update_post.remove(onRegister)    
+        bpy.app.handlers.depsgraph_update_post.remove(onRegister)    
     except:
         pass
 
@@ -249,7 +249,7 @@ def register():
     for cl in classes:
         bpy.utils.register_class(cl)
     bpy.types.Scene.freehk_input_editor = bpy.props.PointerProperty(type = InputEditorProperties)
-    bpy.app.handlers.scene_update_post.append(onRegister)
+    bpy.app.handlers.depsgraph_update_post.append(onRegister)
     bpy.app.handlers.load_post.append(onFileLoaded)
     
 def unregister(): 

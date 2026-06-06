@@ -124,16 +124,16 @@ class RescaleAnimations(GlobalNodeModifier,RescaleAnimation):
     bl_options = parent.bl_options
     bl_description = parent.bl_description.replace("Action","Selected Nodes Action")
         
-    scale_factor = bpy.props.FloatProperty(name = "Scale", default = 1.0)
-    start_frame = bpy.props.IntProperty(name = "Start Frame", default = 0)
-    end_frame = bpy.props.IntProperty(name = "End Frame", default = -1)
-    discretize = bpy.props.BoolProperty(name = "Discretize Keyframes", default = True)
+    scale_factor: bpy.props.FloatProperty(name = "Scale", default = 1.0)
+    start_frame: bpy.props.IntProperty(name = "Start Frame", default = 0)
+    end_frame: bpy.props.IntProperty(name = "End Frame", default = -1)
+    discretize: bpy.props.BoolProperty(name = "Discretize Keyframes", default = True)
 
 #layout.operator("freehk.resample_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
 #layout.operator("freehk.create_fcurve_action",icon_value=pcoll["FREEHK"].icon_id, text="Add FreeHK Props")
 
 class ActionToolsNodes(bpy.types.Panel):
-    bl_idname = "freehk.tree_tools_lmt_ops"
+    bl_idname = "FREEHK_PT_tree_tools_lmt_ops"
     bl_space_type = 'NODE_EDITOR'
     bl_category = "MHW Free HK"
     bl_region_type = 'UI'
@@ -164,7 +164,7 @@ class ActionToolsNodes(bpy.types.Panel):
         
 
 class ExportSettings(bpy.types.Panel):
-    bl_idname = "freehk.tree_tools_export"
+    bl_idname = "FREEHK_PT_tree_tools_export"
     bl_space_type = 'NODE_EDITOR'
     bl_category = "MHW Free HK"
     bl_region_type = 'UI'
@@ -195,7 +195,7 @@ class ExportSettings(bpy.types.Panel):
 
 #layout.operator("freehk.export",icon_value=pcoll["FREEHK"].icon_id,text="Export")
 class TreeTools(bpy.types.Panel):
-    bl_idname = "freehk.tree_tools"
+    bl_idname = "FREEHK_PT_tree_tools"
     bl_space_type = 'NODE_EDITOR'
     bl_category = "MHW Free HK"
     bl_region_type = 'UI'

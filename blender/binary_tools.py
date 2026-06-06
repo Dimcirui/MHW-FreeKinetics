@@ -65,22 +65,22 @@ def setInt(self,val=None):
 
 class BitToolsProperties(bpy.types.PropertyGroup):
     #nextAction = bpy.props.PointerProperty(name = "Next Animation", type="Action")
-    name = bpy.props.StringProperty(name = "Operation Label",default = "")
-    int_input = bpy.props.IntProperty(name = "Integer Input",update = intInputUpdate,default = 0)
-    binary_string = bpy.props.StringProperty(name = "Binary Input", update = binaryInputUpdate, default = intToBin(0))
-    operation = bpy.props.EnumProperty(name = "Binary Operation",
+    name: bpy.props.StringProperty(name = "Operation Label",default = "")
+    int_input: bpy.props.IntProperty(name = "Integer Input",update = intInputUpdate,default = 0)
+    binary_string: bpy.props.StringProperty(name = "Binary Input", update = binaryInputUpdate, default = intToBin(0))
+    operation: bpy.props.EnumProperty(name = "Binary Operation",
                                        items = [("+","Or","Or"),
                                                 ("x","And","And"),
                                                 ("xor",'Xor',"Xor"),
                                                 ],default = "+")
-    binary_target = bpy.props.StringProperty(name = "Binary Operator",update = binaryTargetUpdate, default = intToBin(0))
-    binary_result = bpy.props.StringProperty(name = "Binary Result", get = calcBinaryResult,set = lambda s,y: setBin(calcBinaryResult(s)))
-    int_result = bpy.props.IntProperty(name = "Integer Result", get = calcIntResult,set = lambda s,y: setInt(calcIntResult(s)))
+    binary_target: bpy.props.StringProperty(name = "Binary Operator",update = binaryTargetUpdate, default = intToBin(0))
+    binary_result: bpy.props.StringProperty(name = "Binary Result", get = calcBinaryResult,set = lambda s,y: setBin(calcBinaryResult(s)))
+    int_result: bpy.props.IntProperty(name = "Integer Result", get = calcIntResult,set = lambda s,y: setInt(calcIntResult(s)))
     #bool_test = bpy.props.BoolVectorProperty(name="Test",size=8)
     
 class BitTools(NOTES_PT_objectList,bpy.types.Panel):
     bl_category = "MHW Tools"
-    bl_idname = "panel.bitutils"
+    bl_idname = "FREEHK_PT_bitutils"
     bl_label = "Bit Edit Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

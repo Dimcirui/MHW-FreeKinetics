@@ -101,8 +101,8 @@ class uiNodeManager():
         node.name = "TIML Data Node"
         node.unkn1 = data.dataIx0
         node.unkn2 = data.dataIx1
-        node.animLength = data.animationLength
-        node.loopStartPoint = data.loopStartPoint
+        node.animLength = int(data.animationLength)
+        node.loopStartPoint = int(data.loopStartPoint)
         node.loopControl = str(data.loopControl)
         for inpx in inputs:
             self.tree.links.new(inpx.outputs["TIML Animation"],node.inputs["TIML Animation"])

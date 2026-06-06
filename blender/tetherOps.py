@@ -9,8 +9,24 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Matrix,Vector,Quaternion,Euler
 from .blenderOps import breakPath,transformSize,setBoneFunction,fetchBoneFunction,replaceBoneName,customizeFCurve
+import re
 
-class FreeHK_IncompleteFCurve(Exception): 
+_MHBONE_NAME_RE = re.compile(r'^MhBone_(\d+)$')
+def boneFunctionId(b):
+    """MHW bone-function id for an armature bone (PoseBone or Bone), or None.
+    Supports the legacy mod3 importer (integer 'boneFunction' custom property)
+    and the 3.x+ importer's 'MhBone_<id>' naming convention."""
+    if "boneFunction" in b:
+        return b["boneFunction"]
+    bone = getattr(b, "bone", None)
+    if bone is not None and "boneFunction" in bone:
+        return bone["boneFunction"]
+    m = _MHBONE_NAME_RE.match(b.name)
+    if m:
+        return int(m.group(1))
+    return None
+
+class FreeHK_IncompleteFCurve(Exception):
     # Constructor or Initializer 
     def __init__(self, errlist): 
         self.errors = errlist
@@ -111,15 +127,20 @@ def updateAnimationBoneFunctions(skeleton,action):
     for fcurve in action.fcurves:
         try:
             pbone = getBoneFromPath(skeleton,fcurve.data_path)
-            if "boneFunction" not in pbone.bone: raise ValueError("Functionless Bone %s"%pbone.name)
-            function = pbone.bone["boneFunction"]
+            function = boneFunctionId(pbone)
+            if function is None: raise ValueError("Functionless Bone %s"%pbone.name)
             setBoneFunction(fcurve,function)
         except:
             #TODO - Need an error handler to log the errors happening here
             pass
 
 def boneFunctionMap(skeleton):
-    return {bone.bone["boneFunction"]:bone for bone in skeleton.pose.bones if "boneFunction" in bone.bone}
+    result = {}
+    for bone in skeleton.pose.bones:
+        fid = boneFunctionId(bone)
+        if fid is not None:
+            result[fid] = bone
+    return result
 
 def updateAnimationNames(skeleton,action):
     if skeleton:        

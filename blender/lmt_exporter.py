@@ -10,7 +10,7 @@ from .lmt_exporter_action_calculators import EncodingObject,SynchronicityObject,
 from .blenderOps import breakPath,fetchFreeHKCustom,fetchEncodingType,fetchBoneFunction
 from .blenderOps import transformSize
 from .lmt_tools import actionDataPath,axislessDataPath
-from .tetherOps import getBoneFromPath,boneFunctionMap,basicTransformsForType,basisTransformForType, transformsForType
+from .tetherOps import getBoneFromPath,boneFunctionMap,basicTransformsForType,basisTransformForType, transformsForType, boneFunctionId
 from ..struct import Lmt
 from ..struct.LmtBuffers import typeMapping,lerped,buffered
 def wrappedMap(skeleton):
@@ -110,16 +110,17 @@ class LMTTransform(EncodingObject, SynchronicityObject, InversionObject):
         return True
     def assignBoneFunction(self,tether,boneFunction):
         pbone = getBoneFromPath(tether,self.data_path)
-        if pbone and "boneFunction" in pbone.bone and pbone.bone["boneFunction"] != boneFunction:
+        boneFunctionValue = boneFunctionId(pbone) if pbone else None
+        if boneFunctionValue is not None and boneFunctionValue != boneFunction:
             try:
                 self.fcurveReportPattern("F_LMT_NAME_FUNCTION_CONFLICT",self.passF,"Bone function set according to the relevant bone",
                                          self.errorOut,"Transform was omitted from export process",
                                          tether.name)
-                self.boneFunction = pbone.bone["boneFunction"]                
+                self.boneFunction = boneFunctionValue
             except FreeHKError:
                 return False
         else:
-            self.boneFunction = boneFunction        
+            self.boneFunction = boneFunction
         return True
     #Validate and Calculate Bone Functions, Drop Illegals
     def calculateValidateBoneFunction(self,tether):
@@ -130,10 +131,11 @@ class LMTTransform(EncodingObject, SynchronicityObject, InversionObject):
             boneFunctions.remove(-2)
         except:
             pass
-        if len(boneFunctions) != 1:            
+        if len(boneFunctions) != 1:
             pbone = getBoneFromPath(tether,self.data_path)
-            #If there's no tie breaker bone            
-            if not pbone or "boneFunction" not in pbone.bone:
+            pboneFunction = boneFunctionId(pbone) if pbone else None
+            #If there's no tie breaker bone
+            if pboneFunction is None:
                 if len(boneFunctions)>1: 
                     self.report("F_LMT_CONFLICTING_BONE_FUNCTION")
                     if self.error_handler.fcurveError.fix or self.fcurveError.omit:
@@ -145,7 +147,7 @@ class LMTTransform(EncodingObject, SynchronicityObject, InversionObject):
                         self.error_handler.logSolution("Transform omitted from export process")
                     return False
             #If there's a tiebreaker bone but it's not one of the choices
-            if pbone.bone["boneFunction"] not in boneFunctions:                
+            if pboneFunction not in boneFunctions:
                 self.report("F_LMT_NAME_FUNCTION_CONFLICT")
                 if self.error_handler.fcurveError.fix:
                     self.error_handler.logSolution("Bone function set according to the relevant bone")
@@ -153,8 +155,8 @@ class LMTTransform(EncodingObject, SynchronicityObject, InversionObject):
                     self.error_handler.logSolution("Transform omitted from export process")
                     return False
                 else:
-                    return False                
-            self.boneFunction = pbone.bone["boneFunction"]            
+                    return False
+            self.boneFunction = pboneFunction
         if len(boneFunctions) == 1:
             self.assignBoneFunction(tether,boneFunctions.pop())
         if self.boneFunction == -1: self.usage = self.usage+3

@@ -33,7 +33,7 @@ class NOTES_OT_actions(bpy.types.Operator):
     bl_description = "Move items up and down, add and remove"
     bl_options = {'REGISTER'}
 
-    action = bpy.props.EnumProperty(
+    action: bpy.props.EnumProperty(
         items=(
             ('UP', "Up", ""),
             ('DOWN', "Down", ""),
@@ -134,8 +134,8 @@ class NOTES_PT_objectList():
             row.template_list("NOTES_UL_items", "freehk_notes_def_list", scn, "freehk_notes", 
                 scn, "freehk_notes_index")
             col = row.column(align=True)
-            col.operator("freehk_notes.list_action", icon='ZOOMIN', text="").action = 'ADD'
-            col.operator("freehk_notes.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
+            col.operator("freehk_notes.list_action", icon='ADD', text="").action = 'ADD'
+            col.operator("freehk_notes.list_action", icon='REMOVE', text="").action = 'REMOVE'
             col.separator()
             col.operator("freehk_notes.list_action", icon='TRIA_UP', text="").action = 'UP'
             col.operator("freehk_notes.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
@@ -145,7 +145,7 @@ class NOTES_PT_objectList():
             row.template_list("NOTES_UL_items", "freehk_notes_grid_list", scn, "freehk_notes", 
                 scn, "freehk_notes_index", type='GRID', columns = 4)
             col = row.column(align=True)
-            col.operator("freehk_notes.list_action", icon='ZOOMIN', text="").action = 'ADD'
+            col.operator("freehk_notes.list_action", icon='ADD', text="").action = 'ADD'
 
 
 

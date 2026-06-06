@@ -23,15 +23,15 @@ class TIMLDataNode(FreeHKNode, Node):
     '''TIML Data Node'''
     bl_idname = 'TIMLDataNode'
     bl_label = "TIML Data Node"
-    bl_icon = 'LAMP_DATA'
+    bl_icon = 'LIGHT_DATA'
     __mainInput__ = "TIML Animation"
     
-    name = bpy.props.StringProperty(name="Name")
-    unkn1 = bpy.props.IntProperty(name="Unknown 1")
-    unkn2 = bpy.props.IntProperty(name="Unknown 2")
-    animLength = bpy.props.IntProperty(name="Animation Length",min = 0)
-    loopStartPoint = bpy.props.IntProperty(name="Loop Start Point")
-    loopControl = bpy.props.EnumProperty(name="Loop Control",
+    name: bpy.props.StringProperty(name="Name")
+    unkn1: bpy.props.IntProperty(name="Unknown 1")
+    unkn2: bpy.props.IntProperty(name="Unknown 2")
+    animLength: bpy.props.IntProperty(name="Animation Length",min = 0)
+    loopStartPoint: bpy.props.IntProperty(name="Loop Start Point")
+    loopControl: bpy.props.EnumProperty(name="Loop Control",
 		description="Decide to install, ignore, or defer new addon update",
 		items=[
 			("0","No Loop","Don't Loop"),
@@ -40,6 +40,7 @@ class TIMLDataNode(FreeHKNode, Node):
 			("3","UnknLoop","????")
 		],)
     def init(self, context):
+        self.freehkStyle()
         #self.inputs.new('CustomSocketType', "Hello")
         inputs = self.inputs.new('FreeHKTimlSocket',"TIML Animation",identifier="TIML_Animation")
         inputs.link_limit = 0
@@ -62,11 +63,12 @@ class TIMLEntryNode(FreeHKNode, Node):
     '''TIML Entry Node'''
     bl_idname = 'TIMLEntryNode'
     bl_label = "TIML Entry Node"
-    bl_icon = 'LAMP_DATA'
+    bl_icon = 'LIGHT_DATA'
     __mainInput__ = "TIML Data"
 
-    entryNum = bpy.props.IntProperty(name="Entry Number")
+    entryNum: bpy.props.IntProperty(name="Entry Number")
     def init(self, context):
+        self.freehkStyle()
         self.inputs.new('FreeHKTimlDataSocket',"TIML Data",identifier="TIML_Data")
         #inputs.link_limit = 0
         self.outputs.new('FreeHKTimlEntrySocket', "TIML Entry",identifier="TIML_Entry")
@@ -86,11 +88,12 @@ class EFXEntryNode(FreeHKNode,Node):
     '''EFX Data Node'''
     bl_idname = 'EFXEntryNode'
     bl_label = "EFX Entry Node"
-    bl_icon = 'LAMP_DATA'
+    bl_icon = 'LIGHT_DATA'
     __mainInput__ = "TIML Data"
 
-    entryNum = bpy.props.IntProperty(name="EFX Entry Number")
+    entryNum: bpy.props.IntProperty(name="EFX Entry Number")
     def init(self, context):
+        self.freehkStyle()
         inputs = self.inputs.new('FreeHKTimlDataSocket',"TIML Data",identifier="TIML_Data")
         inputs.link_limit = 0
         self.outputs.new('FreeHKEFXEntrySocket', "EFX Entry",identifier="EFX_Entry")
@@ -109,16 +112,17 @@ class LMTEntryNode(FreeHKNode,Node):
     '''LMT Data Node'''
     bl_idname = 'LMTEntryNode'
     bl_label = "LMT Entry Node"
-    bl_icon = 'LAMP_DATA'
+    bl_icon = 'LIGHT_DATA'
     __mainInput__ = None
 
-    entryNum = bpy.props.IntProperty(name="Id")
+    entryNum: bpy.props.IntProperty(name="Id")
     #transVec = bpy.props.FloatVectorProperty(size=3,name="Trans",subtype = 'TRANSLATION')
     #quatLerpVec = bpy.props.FloatVectorProperty(size=4,name="Quat",subtype = 'QUATERNION')
-    loopFrame = bpy.props.IntProperty(name="Looping Frame",default = 0  )
+    loopFrame: bpy.props.IntProperty(name="Looping Frame",default = 0  )
     byteflag = bpy.props.BoolVectorProperty(size=8,name="Flags")
     byteflag2 = bpy.props.BoolVectorProperty(size=8,name="Flags")
     def init(self, context):
+        self.freehkStyle()
         #self.inputs.new('CustomSocketType', "Hello")
         self.inputs.new('FreeHKAnimationSocket',"LMT Animation",identifier="LMT_Animation")
         self.inputs.new('FreeHKTimlDataSocket',"TIML Data",identifier="TIML_Data")

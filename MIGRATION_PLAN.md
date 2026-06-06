@@ -176,3 +176,29 @@ lmt = parseLMT(path)   # lmt.Header / lmt.ActionHeaders[*].{id,frameCount,fcurve
 - timl_controller 797 属性转换后必须在真实 Blender 实测注册。
 - depsgraph 时机：删 `scene.update()` 处若下游立即读骨骼矩阵，需显式 `view_layer.update()`。
 - 节点菜单 4.0 改写需在 4.3 实测右键 Add 菜单出现自定义分类。
+
+---
+
+## 9. Runtime 修复日志（在 5.1 压测 + 4.3 实测中发现，原计划未覆盖的整类问题）
+
+> 规律：原迁移工具每次只匹配某一种正则形式，**整类整类地漏**。注册一报错即中止、
+> 后续模块从未执行，故采用"在 5.1（比 4.3 严格）压测找 4.x 真 bug + 主动全扫"的策略。
+
+| # | 类别 | 症状 | 修复 |
+|---|---|---|---|
+| R1 | `bpy.props.`**前缀**属性声明未转注解（99 处 / 10 文件） | 属性静默不注册 → `action.freehk.*` AttributeError | `名 = bpy.props.X(` → `名: bpy.props.X(` |
+| R2 | 废弃图标标识符 | 注册期 `enum "LAMP_DATA" not found` / 绘制期崩 | `LAMP_DATA→LIGHT_DATA`、`ZOOMIN→ADD`、`ZOOMOUT→REMOVE`、`VISIBLE_IPO_*→(UN)LINKED` |
+| R3 | Panel `bl_idname` 缺 `_PT_`（11 个） | 注册警告（5.x 趋严） | 统一 `FREEHK_PT_*` |
+| R4 | `bpy.app.handlers.scene_update_post`（2.8 移除） | `AttributeError` 注册崩 | → `depsgraph_update_post`，且 `onRegister(scene)` → `onRegister(scene, depsgraph=None)`（回调签名变 2 参） |
+| R5 | 自定义节点重写 `__init__` | `ReferenceError: StructRNA ... has been removed` | 移除 `FreeHKNode.__init__`，改在各节点 `init()` 调 `freehkStyle()` |
+| R6 | `freedomUniteAnim.unregister` 对菜单类型用 `in` + 菜单写反 | `TypeError: '_RNAMeta' is not iterable`（disable 崩） | 改 `try/except` 从正确菜单 `.remove()` |
+| R7 | float→IntProperty 严格化 | `expected an int type, not float` | `node.animLength/loopStartPoint = int(...)` |
+| R8 | **新版 mod3 导入器骨骼命名变更**（`boneFunction` 属性 → `MhBone_NNN` 名） | tether/export 找不到功能 ID | 新增 `tetherOps.boneFunctionId()`：优先读 `boneFunction` 属性，回退解析 `MhBone_NNN` 名；tether + export 全部读取点改用之（向后兼容两种导入器） |
+
+### 4.3 实测结论（样本 `co00_06.lmt` + `f_mesh.mod3`）
+- ✅ 注册通过；LMT 导入完成（645 actions，节点树 924 节点）
+- ✅ tether 到 MhBone 骨架：通道 `BoneFunction.NNN` → `MhBone_NNN` 重映射（307/314，余 7 为 Root），**拖帧时骨架真实运动**
+- ⏳ 导出 round-trip：代码已适配 MhBone，待实测
+
+### 仅 5.x、不影响 4.3 目标的已知差异（按决策**不适配**）
+- `action.fcurves` 在 **5.0+ 移除**（4.3/4.4 仍可用，4.4 为兼容代理）。完整 5.x 支持需改写为 slotted-action 的 `channelbag/slot` API（大工程，独立任务）。目标锁 4.3，故不做。

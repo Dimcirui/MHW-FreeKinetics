@@ -55,10 +55,11 @@ class LMTActionNode(Node, FreeHKAnimationNode):
     bl_idname = 'LMTActionNode'
     bl_label = "LMT Action Node"
     bl_icon = 'ACTION'
-    input_action = bpy.props.PointerProperty(name = "Action",
+    input_action: bpy.props.PointerProperty(name = "Action",
                                             type=bpy.types.Action,
                                     		poll=filter_Non_TIML_actions)
     def init(self, context):
+        self.freehkStyle()
         self.use_custom_color = True
         #self.inputs.new('CustomSocketType', "Hello")
         self.outputs.new('FreeHKAnimationSocket', "LMT Animation",identifier="LMT_Animation")
@@ -381,10 +382,11 @@ class TIMLActionNode(Node, FreeHKAnimationNode):
     bl_label = "TIML Action Node"
     bl_icon = 'ACTION'
 
-    input_action = bpy.props.PointerProperty(name = "Action",
+    input_action: bpy.props.PointerProperty(name = "Action",
                                             type=bpy.types.Action,
                                     		poll=filter_TIML_actions)
     def init(self, context):
+        self.freehkStyle()
         #self.inputs.new('CustomSocketType', "Hello")
         self.outputs.new('FreeHKTimlSocket', "TIML Animation",identifier="TIML_Animation")
         
