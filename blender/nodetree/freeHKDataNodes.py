@@ -41,9 +41,9 @@ class TIMLDataNode(FreeHKNode, Node):
 		],)
     def init(self, context):
         #self.inputs.new('CustomSocketType', "Hello")
-        inputs = self.inputs.new('FreeHKTimlSocket',"TIML Animation","TIML_Animation")
+        inputs = self.inputs.new('FreeHKTimlSocket',"TIML Animation",identifier="TIML_Animation")
         inputs.link_limit = 0
-        self.outputs.new('FreeHKTimlDataSocket', "TIML Data","TIML_Data")
+        self.outputs.new('FreeHKTimlDataSocket', "TIML Data",identifier="TIML_Data")
     def draw_buttons(self, context, layout):
         layout.prop(self, "name")
         layout.prop(self, "unkn1")
@@ -67,9 +67,9 @@ class TIMLEntryNode(FreeHKNode, Node):
 
     entryNum = bpy.props.IntProperty(name="Entry Number")
     def init(self, context):
-        self.inputs.new('FreeHKTimlDataSocket',"TIML Data","TIML_Data")
+        self.inputs.new('FreeHKTimlDataSocket',"TIML Data",identifier="TIML_Data")
         #inputs.link_limit = 0
-        self.outputs.new('FreeHKTimlEntrySocket', "TIML Entry","TIML_Entry")
+        self.outputs.new('FreeHKTimlEntrySocket', "TIML Entry",identifier="TIML_Entry")
         #TODO - Count existing TIML nodes and set the sstarting value of entryNum to that
     def draw_buttons(self, context, layout):
         layout.prop(self, "entryNum")
@@ -91,9 +91,9 @@ class EFXEntryNode(FreeHKNode,Node):
 
     entryNum = bpy.props.IntProperty(name="EFX Entry Number")
     def init(self, context):
-        inputs = self.inputs.new('FreeHKTimlDataSocket',"TIML Data","TIML_Data")
+        inputs = self.inputs.new('FreeHKTimlDataSocket',"TIML Data",identifier="TIML_Data")
         inputs.link_limit = 0
-        self.outputs.new('FreeHKEFXEntrySocket', "EFX Entry","EFX_Entry")
+        self.outputs.new('FreeHKEFXEntrySocket', "EFX Entry",identifier="EFX_Entry")
         #TODO - Count existing EFX nodes and set the sstarting value of entryNum to that
     def draw_buttons(self, context, layout):
         layout.prop(self, "entryNum")
@@ -120,9 +120,9 @@ class LMTEntryNode(FreeHKNode,Node):
     byteflag2 = bpy.props.BoolVectorProperty(size=8,name="Flags")
     def init(self, context):
         #self.inputs.new('CustomSocketType', "Hello")
-        self.inputs.new('FreeHKAnimationSocket',"LMT Animation","LMT_Animation")
-        self.inputs.new('FreeHKTimlDataSocket',"TIML Data","TIML_Data")
-        self.outputs.new('FreeHKAnimationEntrySocket', "LMT Entry","LMT_Entry")
+        self.inputs.new('FreeHKAnimationSocket',"LMT Animation",identifier="LMT_Animation")
+        self.inputs.new('FreeHKTimlDataSocket',"TIML Data",identifier="TIML_Data")
+        self.outputs.new('FreeHKAnimationEntrySocket', "LMT Entry",identifier="LMT_Entry")
         #TODO - Count existing EFX nodes and set the sstarting value of entryNum to that
     def draw_buttons(self, context, layout):        
         layout.prop(self, "entryNum")

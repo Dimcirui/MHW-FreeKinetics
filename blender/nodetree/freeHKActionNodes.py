@@ -61,7 +61,7 @@ class LMTActionNode(Node, FreeHKAnimationNode):
     def init(self, context):
         self.use_custom_color = True
         #self.inputs.new('CustomSocketType', "Hello")
-        self.outputs.new('FreeHKAnimationSocket', "LMT Animation","LMT_Animation")
+        self.outputs.new('FreeHKAnimationSocket', "LMT Animation",identifier="LMT_Animation")
         
     def basicStructure(self):
         return self
@@ -386,7 +386,7 @@ class TIMLActionNode(Node, FreeHKAnimationNode):
                                     		poll=filter_TIML_actions)
     def init(self, context):
         #self.inputs.new('CustomSocketType', "Hello")
-        self.outputs.new('FreeHKTimlSocket', "TIML Animation","TIML_Animation")
+        self.outputs.new('FreeHKTimlSocket', "TIML Animation",identifier="TIML_Animation")
         
     def basicStructure(self):        
         return self

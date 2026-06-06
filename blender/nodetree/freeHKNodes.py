@@ -111,55 +111,81 @@ class FreeHKNode:
         self.cacheAdd(structure)
         return structure
 
-### Node Categories ###
-import nodeitems_utils
-from nodeitems_utils import NodeCategory, NodeItem
+### Node Add Menu (Blender 4.x: NODE_MT_add append) ###
 
-class FreeHKNodeCategory(NodeCategory):
-    @classmethod
-    def poll(cls, context):
-        return context.space_data.tree_type == 'FreeHKNodeTree'
-    
-# all categories in a list
-node_categories = list(reversed([
-    # identifier, label, items list
-    FreeHKNodeCategory('INPUT', "Input", items=[
-        NodeItem("LMTActionNode"),
-        NodeItem("TIMLActionNode"),
-    ]),
-    FreeHKNodeCategory('DATA', "Data", items=[
-        # the node item can have additional settings,
-        # which are applied to new nodes
-        # NB: settings values are stored as string expressions,
-        # for this reason they should be converted to strings using repr()
-        NodeItem("LMTEntryNode"),
-        NodeItem("EFXEntryNode"),
-        NodeItem("TIMLDataNode"),
-        NodeItem("TIMLEntryNode"),
-    ]),
-    # FreeHKNodeCategory('OPERATION', "Operations", items=[
-    #     NodeItem("FoldActionNode"),
-    #     NodeItem("ResampleNode"),
-        
-    # ]),    
-    FreeHKNodeCategory('OUTPUT', "Output", items=[
-        NodeItem("LMTFileNode"),
-        #NodeItem("LMTFileInjectionNode"),
-        NodeItem("EFXFileNode"),
-        NodeItem("TIMLFileNode"),
-        #NodeItem("JSONFileNode"),
-    ]), 
-]))
+def _freehk_tree(context):
+    return (context.space_data is not None and
+            context.space_data.tree_type == 'FreeHKNodeTree')
 
-classes = [
+class NODE_MT_freehk_input(bpy.types.Menu):
+    bl_idname = "NODE_MT_freehk_input"
+    bl_label = "Input"
+    def draw(self, context):
+        layout = self.layout
+        for type_name, label in [
+            ("LMTActionNode",  "LMT Action"),
+            ("TIMLActionNode", "TIML Action"),
+        ]:
+            props = layout.operator("node.add_node", text=label)
+            props.type = type_name
+            props.use_transform = True
+
+class NODE_MT_freehk_data(bpy.types.Menu):
+    bl_idname = "NODE_MT_freehk_data"
+    bl_label = "Data"
+    def draw(self, context):
+        layout = self.layout
+        for type_name, label in [
+            ("LMTEntryNode",  "LMT Entry"),
+            ("EFXEntryNode",  "EFX Entry"),
+            ("TIMLDataNode",  "TIML Data"),
+            ("TIMLEntryNode", "TIML Entry"),
+        ]:
+            props = layout.operator("node.add_node", text=label)
+            props.type = type_name
+            props.use_transform = True
+
+class NODE_MT_freehk_output(bpy.types.Menu):
+    bl_idname = "NODE_MT_freehk_output"
+    bl_label = "Output"
+    def draw(self, context):
+        layout = self.layout
+        for type_name, label in [
+            ("LMTFileNode",  "LMT File"),
+            ("EFXFileNode",  "EFX File"),
+            ("TIMLFileNode", "TIML File"),
+        ]:
+            props = layout.operator("node.add_node", text=label)
+            props.type = type_name
+            props.use_transform = True
+
+def _draw_freehk_add_menu(self, context):
+    if not _freehk_tree(context):
+        return
+    layout = self.layout
+    layout.separator()
+    layout.menu("NODE_MT_freehk_input")
+    layout.menu("NODE_MT_freehk_data")
+    layout.menu("NODE_MT_freehk_output")
+
+_category_menus = [
+    NODE_MT_freehk_input,
+    NODE_MT_freehk_data,
+    NODE_MT_freehk_output,
 ]
+
+classes = []
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    nodeitems_utils.register_node_categories('FREEHK_NODE_CATEGORIES', node_categories)
+    for menu_cls in _category_menus:
+        bpy.utils.register_class(menu_cls)
+    bpy.types.NODE_MT_add.append(_draw_freehk_add_menu)
 
 def unregister():
-    nodeitems_utils.unregister_node_categories('FREEHK_NODE_CATEGORIES')
-    for cls in classes:
+    bpy.types.NODE_MT_add.remove(_draw_freehk_add_menu)
+    for menu_cls in reversed(_category_menus):
+        bpy.utils.unregister_class(menu_cls)
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

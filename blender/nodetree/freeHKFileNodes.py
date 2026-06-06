@@ -31,7 +31,7 @@ class FreeHKOutputNode(FreeHKNode):
     exec(outputProps)
     addon_key = __package__.split('.')[0]
     def init(self, context):
-        inx = self.inputs.new(self.inputType,self.inputName,self.inputStr)
+        inx = self.inputs.new(self.inputType, self.inputName, identifier=self.inputStr)
         inx.link_limit = 0
     # Additional buttons displayed on the node.
     def draw_buttons(self, context, layout):
