@@ -99,7 +99,7 @@ class RigTransferTools(bpy.types.Panel):
     bl_idname = "panel.rig_props"
     bl_label = "Rig Transfer Tools"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     addon_key = __package__.split('.')[0]
     
     def draw(self, context):

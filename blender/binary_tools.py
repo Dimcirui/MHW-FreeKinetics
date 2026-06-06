@@ -83,7 +83,7 @@ class BitTools(NOTES_PT_objectList,bpy.types.Panel):
     bl_idname = "panel.bitutils"
     bl_label = "Bit Edit Tools"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     addon_key = __package__.split('.')[0]
     def draw(self, context):
         layout = self.layout

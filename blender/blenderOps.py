@@ -93,7 +93,7 @@ def foldFCurve(action,fcurve):
 
 def addKeyframe(action, fcurve):
     f = max((k.co for k in fcurve.keyframe_points),default = (0,0),key=lambda x:x[0])
-    fcurve.keyframe_points.insert(f[0]+1,f[1],{'NEEDED'})
+    fcurve.keyframe_points.insert(f[0]+1,f[1],options={'NEEDED'})
     #fcurve.keyframe_points.add(1)
     #fcurve.keyframe_points[-1].co = (f[0]+1,f[1])
     
