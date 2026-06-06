@@ -11,7 +11,7 @@ from .blenderOps import (customizeFCurve,foldFCurve,addKeyframe,getActions,fetch
                         previewStrip,rescaleAnimation,matchBoneId)
 from .tetherOps import (transferTether, updateAnimationNames,updateAnimationBoneFunctions,
                         completeMissingChannels,synchronizeKeyframes,resampleAction,resampleFCurve,
-                        getBoneFromPath,boneFunctionId)
+                        getBoneFromPath,boneFunctionId,recalculateIKBones)
 from .lmt_exporter import LMTActionParser
 from ..error_handling.errorController import DebugVerifier
 from .lmt_tools import encodingTypes
@@ -274,6 +274,18 @@ class MaximizeQuality(MappedActionOperator,bpy.types.Operator):
             if not fetchEncodingType(fcurve):
                 setMaxEncoding(fcurve)
 
+class RecalculateIKBones(MappedActionOperator,bpy.types.Operator):
+    bl_idname = "freehk.recalculate_ik_bones"
+    bl_label = "Recalculate IK Bones"
+    bl_options = {'REGISTER', 'PRESET', 'UNDO'}
+    bl_description = ("Bake the IK controller bones so they track their deform-bone targets "
+                      "(hand IK -> palm, head IK -> head). Fixes baked / authored animations where "
+                      "the IK bones were left at rest, which snaps hands to the body centre in game. "
+                      "Requires a tether; operates on the tethered (posed) action.")
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    def mappedOperator(self,armature,action):
+        recalculateIKBones(armature,action)
+
 class CheckActionForExport(MappedActionOperator,bpy.types.Operator):
     bl_idname = "freehk.check_export"
     bl_label = "Check Action for Free Kinetics Export"
@@ -356,7 +368,8 @@ class RescaleAnimation(bpy.types.Operator):
 classes = [
     CreateFCurve,FoldFCurve,MatchBoneId,AddKeyframes,TransferTether,TransferTetherSilent,ClearTether,UpdateBoneFunctions,UpdateAnimationNames,
     CompleteChannels,SynchronizeKeyframes,ResampleFCurve,ResampleSelectedFCurve,GlobalEnableFCurves,CheckActionForExport,
-    ResampleSelectedTIMLFCurve, ClearEncoding, MaximizeQuality, PreviewActionsInStrip, RescaleAnimation
+    ResampleSelectedTIMLFCurve, ClearEncoding, MaximizeQuality, PreviewActionsInStrip, RescaleAnimation,
+    RecalculateIKBones
 ]
 
 def register():

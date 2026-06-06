@@ -10,7 +10,7 @@ from .lmt_exporter_action_calculators import EncodingObject,SynchronicityObject,
 from .blenderOps import breakPath,fetchFreeHKCustom,fetchEncodingType,fetchBoneFunction
 from .blenderOps import transformSize
 from .lmt_tools import actionDataPath,axislessDataPath
-from .tetherOps import getBoneFromPath,boneFunctionMap,basicTransformsForType,basisTransformForType, transformsForType, boneFunctionId
+from .tetherOps import getBoneFromPath,boneFunctionMap,basicTransformsForType,basisTransformForType, transformsForType, boneFunctionId, restoreRootFromObject
 from ..struct import Lmt
 from ..struct.LmtBuffers import typeMapping,lerped,buffered
 def wrappedMap(skeleton):
@@ -252,9 +252,10 @@ def passFunc():
 class LMTActionParser():
     def __init__(self,action,error_handler,silent_tether = None):
         tether = None
-        self.action = action     
+        self.action = action
         self.error_handler = error_handler
-        self.error_handler.actionOwnership(self.action)        
+        self.error_handler.actionOwnership(self.action)
+        self.synthRoot = []
         try:
             if action.freehk.starType != "LMT_Action":
                 self.actionErrorPattern("A_LMT_INVALID_ACTION_TYPE",passFunc,passFunc)
@@ -264,7 +265,10 @@ class LMTActionParser():
                 tether = action.freehk.tetherFrame
             if tether:
                 functionsMap = wrappedMap(tether)
-                generateDepthMap(tether)  
+                generateDepthMap(tether)
+                # Re-home object-level root motion as a transient Root (boneFunction -1)
+                # channel so the LMT carries it (inverse of import's applyRootToObject).
+                self.synthRoot = restoreRootFromObject(action, tether)
             else:
                 functionsMap = {}
             self.refRot = [0,0,0,1]
@@ -297,9 +301,13 @@ class LMTActionParser():
             #Nothing to do, animation must be removed
             pass
         finally:
+            for fc in self.synthRoot:        # drop transient Root channels; object anim stays
+                try: action.fcurves.remove(fc)
+                except Exception: pass
+            self.synthRoot = []
             if tether:
                 clearDictProp(tether,"__freehk_depth__")
-                clearTetherDepth(tether)            
+                clearTetherDepth(tether)
     def invalidate(self,*args,**kwargs):
         self.valid = False
     def getBasis(self,validChannels):

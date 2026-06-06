@@ -367,14 +367,111 @@ def applyRootToObject(action, armature):
         if fc.data_path.startswith('pose.bones["Root"]'):
             action.fcurves.remove(fc)
 
-def clearReferences(action):
+def restoreRootFromObject(action, armature):
+    """Export-side inverse of applyRootToObject.
+    Modern mod3 armatures have no explicit 'Root' bone, so whole-character root
+    motion (LMT boneFunction -1) lives on the armature OBJECT's animation, placed
+    there at import via  object = M . Root_mhw . M^-1 . Here we read it back and
+    synthesize transient pose.bones["Root"] channels in MHW space
+    ( Root_mhw = M^-1 . object . M ) carrying boneFunction -1, so the normal export
+    pipeline writes the LMT Root entry. Those channels are NOT in the armature's
+    boneFunctionMap, so the tether-inverse passes them through untouched (the values
+    are already MHW-space). Returns the synthesized fcurves so the caller removes
+    them after export, leaving the action's object animation intact (mod3-export safe).
+    No-op for legacy armatures (explicit 'Root' bone) or when Root channels already
+    exist on the action."""
+    synth = []
+    if armature is None:
+        return synth
+    try:
+        if "Root" in armature.data.bones:    # legacy armature drives Root via its bone
+            return synth
+    except Exception:
+        return synth
+    for fc in action.fcurves:                # explicit Root channels already present
+        if fc.data_path.startswith('pose.bones["Root"]'):
+            return synth
+    loc=[None,None,None]; rot=[None,None,None,None]; eul=[None,None,None]
+    for fc in action.fcurves:
+        if fc.data_path == "location" and fc.array_index < 3:
+            loc[fc.array_index]=fc
+        elif fc.data_path == "rotation_quaternion" and fc.array_index < 4:
+            rot[fc.array_index]=fc
+        elif fc.data_path == "rotation_euler" and fc.array_index < 3:
+            eul[fc.array_index]=fc
+    if not any(loc) and not any(rot) and not any(eul):
+        return synth
+    frames=set()
+    for fc in loc+rot+eul:
+        if fc:
+            for k in fc.keyframe_points: frames.add(k.co[0])
+    if not frames:
+        return synth
+    # Densify to every integer frame across the span: the LMT keyframe buffer stores the
+    # inter-keyframe gap as a single byte (max 255), so sparse object keyframes (e.g. a
+    # 580-frame dance keyed only at endpoints) would overflow. Per-frame keying keeps
+    # every gap at 1, matching how real in-game Root tracks are stored.
+    lo=int(round(min(frames))); hi=int(round(max(frames)))
+    denseFrames=range(lo,hi+1) if hi>lo else sorted(frames)
+    # Euler rotation order to reconstruct a rotation matrix when the object animates in
+    # euler rather than quaternion (baked FBX default).
+    eorder=getattr(armature,"rotation_mode","XYZ")
+    if eorder not in {'XYZ','XZY','YXZ','YZX','ZXY','ZYX'}: eorder='XYZ'
+    M=MHW_IMPORT_MATRIX; Mi=M.inverted()
+    rl=[action.fcurves.new('pose.bones["Root"].location',index=i) for i in range(3)]
+    rr=[action.fcurves.new('pose.bones["Root"].rotation_quaternion',index=i) for i in range(4)]
+    for f in denseFrames:
+        l=Vector([(loc[i].evaluate(f) if loc[i] else 0.0) for i in range(3)])
+        if any(rot):
+            q=Quaternion([(rot[i].evaluate(f) if rot[i] else (1.0 if i==0 else 0.0)) for i in range(4)])
+            rotmat=q.to_matrix().to_4x4()
+        elif any(eul):
+            e=Euler([(eul[i].evaluate(f) if eul[i] else 0.0) for i in range(3)], eorder)
+            rotmat=e.to_matrix().to_4x4()
+        else:
+            rotmat=Matrix.Identity(4)
+        rm=Mi @ (Matrix.Translation(l) @ rotmat) @ M
+        t=rm.to_translation(); rq=rm.to_quaternion()
+        for i in range(3): rl[i].keyframe_points.insert(f,t[i],options={'FAST'})
+        for i in range(4): rr[i].keyframe_points.insert(f,rq[i],options={'FAST'})
+    synth=rl+rr
+    for fc in synth:
+        customizeFCurve(fc,0,-1)              # encoding auto-detect, boneFunction -1
+        fc.update()
+    return synth
+
+def _inferSourceArmature(action, target):
+    """The armature OBJECT currently animated by this action - its implicit source
+    frame. Used when an action has no recorded tetherFrame (e.g. a baked / externally
+    imported animation): its fcurve values are really expressed in the pose space of
+    the rig it is posed on, NOT neutral MHW space, so a re-target must invert that rig
+    first. Returns a non-target armature carrying the action, or None."""
+    candidates = [o for o in bpy.data.objects
+                  if o.type == 'ARMATURE' and o.animation_data
+                  and o.animation_data.action == action]
+    for o in candidates:
+        if o is not target:
+            return o
+    return None
+
+def clearReferences(action, target=None):
     tether = action.freehk.tetherFrame
-    
+    if tether is None and target is not None:
+        # No recorded source. For a re-target (Transfer & Update, target set) the values
+        # are usually a baked pose on some rig, not neutral MHW. Infer that rig as the
+        # source so we invert it before forwarding onto the target; otherwise a lone
+        # forward double-applies the rig conversion and collapses every bone to origin.
+        src = _inferSourceArmature(action, target)
+        if src is not None:
+            tether = src
+            print("Free Kinetics: inferred source tether '%s' for untethered action '%s'."
+                  % (src.name, action.name))
+
     preUpdateFunction = updateAnimationBoneFunctions
     updateFunction = unapplyBoneTransform
     postUpdateFunction = insertVectorialKeymatches
     tetherOperator(action,tether,preUpdateFunction,updateFunction,postUpdateFunction)
-            
+
     action.freehk.tetherFrame = None
 
 def targetReferenceFromClear(action,referenceFrame):
@@ -411,8 +508,111 @@ def prepareExportAction(action,options):
     
 def transferTether(actions,tether):
     for action in actions:
-        clearReferences(action)
+        clearReferences(action, tether)
         targetReferenceFromClear(action, tether)
+
+# IK controller bone-function -> (target deform bone-function, copy mode).
+# Empirically tuned for the modern MhBone humanoid: hand IK tracks the PALM (057/040),
+# not the wrist (012/008), and head IK tracks the head bone (004, position only, per the
+# game's "Translation" platform default). Edit/extend this table to cover more rigs.
+#   mode 'FULL' = location + rotation ; mode 'LOC' = location only.
+IK_RECALC_MAP = [
+    (247, 57, 'FULL'),   # Right hand IK -> right palm
+    (248, 40, 'FULL'),   # Left  hand IK -> left  palm
+    (252,  4, 'LOC'),    # Head IK        -> head (position only)
+]
+
+# IK controller bone-function -> constant MHW-space location (identity rotation, single
+# reference frame). Some IK bones are not driven by a deform bone but pinned to a fixed
+# point. Verified against the original co00_06.lmt: 253 ("ground / virtual horizon") is
+# always at the MHW origin with identity rotation across every action.
+IK_CONST_MAP = [
+    (253, (0.0,  0.0, 0.0)),   # ground anchor = MHW origin
+    (251, (0.0, 10.0, 0.0)),   # neck-base / upper-body anchor: stable baseline (Y=10, X/Z=0)
+]
+
+def recalculateIKBones(armature, action, mapping=None):
+    """Bake the IK controller bones so each one coincides (in armature/pose space) with
+    its target deform bone, frame by frame, writing the result into `action`. Fixes baked
+    or authored animations where the IK controllers were never keyed (left at rest), which
+    makes the game snap hands to the body centre / feet through the floor. The action must
+    already be tethered to `armature` (pose space); export then inverts to MHW space.
+    Non-destructive to the armature (no bones added/removed; only this action's keyframes)."""
+    if armature is None or action is None:
+        return
+    if mapping is None:
+        mapping = IK_RECALC_MAP
+    fmap = boneFunctionMap(armature)
+    pairs = [(fmap[ik], fmap[tg], mode) for ik, tg, mode in mapping
+             if ik in fmap and tg in fmap]
+    consts = [(fmap[ik], Vector(loc)) for ik, loc in IK_CONST_MAP if ik in fmap]
+    if not pairs and not consts:
+        print("Free Kinetics: Recalculate IK - no matching IK/target bones on '%s'." % armature.name)
+        return
+    if not armature.animation_data:
+        armature.animation_data_create()
+    prevAction = armature.animation_data.action
+    armature.animation_data.action = action
+    fc = action.freehk.frameCount
+    if not fc or fc < 1:
+        fc = int(max((k.co[0] for f in action.fcurves for k in f.keyframe_points), default=1))
+    # Sample only at the frames the TARGET bones are actually keyed on - follow the source
+    # animation's own keyframe structure instead of force-keying every frame (which would
+    # bloat the LMT). For a fully-baked source these are every frame anyway.
+    sampleFrames = set()
+    for _, tg, _ in pairs:
+        p = 'pose.bones["%s"].' % tg.name
+        for fcv in action.fcurves:
+            if fcv.data_path in (p + "location", p + "rotation_quaternion", p + "rotation_euler"):
+                for k in fcv.keyframe_points:
+                    sampleFrames.add(int(round(k.co[0])))
+    sampleFrames = sorted(sampleFrames) if sampleFrames else list(range(0, int(fc) + 1))
+    # wipe any stale IK location/rotation channels first
+    for ik, _, _ in pairs:
+        path = 'pose.bones["%s"].' % ik.name
+        for fcv in list(action.fcurves):
+            if fcv.data_path == path + "location" or fcv.data_path == path + "rotation_quaternion":
+                action.fcurves.remove(fcv)
+        ik.rotation_mode = 'QUATERNION'
+    scene = bpy.context.scene
+    view = bpy.context.view_layer
+    saved = scene.frame_current
+    for f in sampleFrames:
+        scene.frame_set(f)
+        view.update()
+        targets = [(ik, tg.matrix.copy(), mode) for ik, tg, mode in pairs]  # read before writing
+        for ik, tmat, mode in targets:
+            if mode == 'FULL':
+                ik.matrix = tmat
+                ik.keyframe_insert("location", frame=f)
+                ik.keyframe_insert("rotation_quaternion", frame=f)
+            else:  # LOC: keep the IK bone's own orientation, match position only
+                m = ik.matrix.copy()
+                m.translation = tmat.translation
+                ik.matrix = m
+                ik.keyframe_insert("location", frame=f)
+    scene.frame_set(saved)
+    view.update()
+    # Constant IK bones (e.g. 253 ground anchor): pin to a fixed MHW point. Convert the
+    # MHW target through the import-forward transform to get the matching pose basis, then
+    # write a single reference keyframe at frame 0. No frame loop needed (constant).
+    for ik, mhwloc in consts:
+        path = 'pose.bones["%s"].' % ik.name
+        for fcv in list(action.fcurves):
+            if fcv.data_path == path + "location" or fcv.data_path == path + "rotation_quaternion":
+                action.fcurves.remove(fcv)
+        ik.rotation_mode = 'QUATERNION'
+        ik.matrix_basis = strackerForwardTransform(ik, Matrix.Translation(mhwloc))
+        ik.keyframe_insert("location", frame=0)
+        ik.keyframe_insert("rotation_quaternion", frame=0)
+    # tag new channels with Free Kinetics props (boneFunction) so export keeps them
+    for ik in [p[0] for p in pairs] + [c[0] for c in consts]:
+        bf = boneFunctionId(ik)
+        path = 'pose.bones["%s"].' % ik.name
+        for fcv in action.fcurves:
+            if fcv.data_path.startswith(path) and bf is not None:
+                setBoneFunction(fcv, bf)
+    armature.animation_data.action = prevAction if prevAction else action
         
 def completeMissingChannels(action): 
     errs, curveMap = verifyTuplings(action)
