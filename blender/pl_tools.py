@@ -146,7 +146,7 @@ class selectionPL(bpy.types.Operator):
             else:
                 pl = posCache[tl]
             obj.location = (0,0,0)
-            context.scene.update()
+            context.view_layer.update()
             connectMesh(obj,pl)
         return {"FINISHED"}
     

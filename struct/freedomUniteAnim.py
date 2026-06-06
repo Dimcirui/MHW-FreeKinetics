@@ -433,7 +433,7 @@ if blender:
         for cls in classes:
             bpy.utils.register_class(cls)
         addon_key = __package__.split('.')[0]
-        addon = bpy.context.user_preferences.addons[addon_key]
+        addon = bpy.context.preferences.addons[addon_key]
         wrong = addon.preferences.enable_wrong
         if wrong:
             bpy.types.TOPBAR_MT_file_import.append(menu_func_import_mhfu)

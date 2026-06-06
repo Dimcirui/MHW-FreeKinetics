@@ -33,7 +33,7 @@ encodingMap = {int(ix):[ix,name,desc] for ix,name,desc in encodingTypes}
 
 def createTIMLController():
     empty = bpy.data.objects.new("TIML_Controller",None)
-    bpy.context.scene.objects.link(empty)
+    bpy.context.scene.collection.objects.link(empty)
     empty["Type"] = TIMLCONTROLLER
     return empty
 
@@ -195,7 +195,7 @@ class ActionDataTools(bpy.types.Panel):
     # bl_category = "Tools"
     addon_key = __package__.split('.')[0]
     def draw(self, context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         self.addon_props = addon.preferences
         layout = self.layout
         action = getActiveAction(context)
@@ -275,7 +275,7 @@ class ActionTools(LMTPanel,bpy.types.Panel):
     addon_key = __package__.split('.')[0]
     
     def draw(self, context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         self.addon_props = addon.preferences
         layout = self.layout
         row = layout.row(align = True)
@@ -379,7 +379,7 @@ class FCurveTools(LMTPanel,bpy.types.Panel):
     addon_key = __package__.split('.')[0]
     
     def draw(self, context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         self.addon_props = addon.preferences        
         layout = self.layout
         try:
@@ -451,7 +451,7 @@ class KeyframeTools(bpy.types.Panel):
                         count += 1    
                         if count >= limit: return
     def draw(self, context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         self.addon_props = addon.preferences        
         layout = self.layout     
         try:

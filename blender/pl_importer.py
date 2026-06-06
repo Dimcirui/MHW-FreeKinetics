@@ -72,7 +72,7 @@ class ImportPL(Operator, ImportHelper):
 
 def createPLProxy(viscon):
     pl = bpy.data.objects.new("PlProxy-%02d"%viscon, None )
-    bpy.context.scene.objects.link( pl )
+    bpy.context.scene.collection.objects.link( pl )
     pl["Type"] = "PL_Proxy"
     pl.empty_draw_size = 2.5
     pl.empty_draw_type = "SPHERE"

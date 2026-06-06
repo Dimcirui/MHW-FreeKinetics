@@ -226,7 +226,7 @@ def tetherOperator(action,tether,preUpdateFunction,updateFunction,postUpdateFunc
     if not tether:
         return
     addon_key = __package__.split('.')[0]
-    addon = bpy.context.user_preferences.addons[addon_key]
+    addon = bpy.context.preferences.addons[addon_key]
     implicitTether = addon.preferences.implicit_tether 
     if implicitTether:
         armature = tether

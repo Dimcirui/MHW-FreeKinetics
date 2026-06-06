@@ -179,7 +179,7 @@ class ExportSettings(bpy.types.Panel):
             context.space_data.node_tree.bl_idname == 'FreeHKNodeTree'# and context.scene.node_tree    
 
     def draw(self, context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         #self.addon_props = addon.preferences
         layout = self.layout
         col = layout.column(align=True)

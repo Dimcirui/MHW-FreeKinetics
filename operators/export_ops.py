@@ -99,7 +99,7 @@ class TreeExporter(bpy.types.Operator):
             outf.write(data)       
         """
     def execute(self,context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         self.addon_props = addon.preferences
         globalCacheClear()
         for node in self.getOutputNodes(context):

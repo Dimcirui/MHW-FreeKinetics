@@ -70,7 +70,7 @@ class InputEditorGet(bpy.types.Operator):
             channel.hide = False
             channel.index = 0
         #channels = [editor.inputs.add() for i in range(8)]
-        context.scene.update()
+        context.view_layer.update()
         
         for fcurve in context.active_object.animation_data.action.fcurves:
             if "FreeHKTiml."+editor.datapath == fcurve.data_path:

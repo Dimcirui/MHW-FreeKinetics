@@ -103,7 +103,7 @@ class RigTransferTools(bpy.types.Panel):
     addon_key = __package__.split('.')[0]
     
     def draw(self, context):
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         self.addon_props = addon.preferences
         props = bpy.context.scene.freehk_rig_ops
         layout = self.layout
@@ -223,13 +223,13 @@ def clearConstraints(skeleton,action):
             bone.constraints.remove(c)
 
 def bakeAnimation(context,target):
-    context.scene.update()
+    context.view_layer.update()
     prev_mode = target.mode # save
-    selection = [obj for obj in bpy.context.scene.objects if obj.select]
-    for obj in selection: obj.select = False
-    active = bpy.context.scene.objects.active
-    bpy.context.scene.objects.active = target
-    target.select = True
+    selection = [obj for obj in bpy.context.scene.objects if obj.select_get()]
+    for obj in selection: obj.select_set(False)
+    active = bpy.context.view_layer.objects.active
+    bpy.context.view_layer.objects.active = target
+    target.select_set(True)
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.nla.bake(frame_start=context.scene.frame_start, 
                      frame_end=context.scene.frame_end, 
@@ -243,10 +243,10 @@ def bakeAnimation(context,target):
     clearConstraints(active,active.animation_data.action)
     #Don't Clear Constraints
     #Use them to know what parts of the animation to delete after the baking process
-    target.select = False
-    for obj in selection: obj.select = True
+    target.select_set(False)
+    for obj in selection: obj.select_set(True)
     bpy.ops.object.mode_set(mode=prev_mode) # restore
-    bpy.context.scene.objects.active = active
+    bpy.context.view_layer.objects.active = active
 
 def muteGlobal(catAction):
     for fcurve in catAction:
@@ -429,8 +429,8 @@ class RigAnimationTransfer(bpy.types.Operator):
                 boneMapper[bf] = bone      
         
         prev_mode = copy.mode # save
-        active = bpy.context.scene.objects.active
-        bpy.context.scene.objects.active = copy
+        active = bpy.context.view_layer.objects.active
+        bpy.context.view_layer.objects.active = copy
         bpy.ops.object.mode_set(mode='EDIT')
         additions = []
         ebs = copy.data.edit_bones
@@ -459,7 +459,7 @@ class RigAnimationTransfer(bpy.types.Operator):
             orthogonal[eb.name] = bf
             
         bpy.ops.object.mode_set(mode=prev_mode) # restore
-        bpy.context.scene.objects.active = active
+        bpy.context.view_layer.objects.active = active
         for bone in copy.pose.bones:
             if bone.name in orthogonal:
                 bone["__orthogonalizer__"] = True
@@ -484,7 +484,7 @@ class RigAnimationTransfer(bpy.types.Operator):
     def cloneArmature(source,copyAction = True):
         #copy = source.copy()
         copy = bpy.data.objects.new('FreeHK_GuideClone_'+source.name, source.data)
-        bpy.context.scene.objects.link(copy)
+        bpy.context.scene.collection.objects.link(copy)
         if copyAction and source.animation_data:
             if source.animation_data.action:
                 new_action = bpy.data.actions.new(name = "FreeHK_"+source.animation_data.action.name)
@@ -492,7 +492,7 @@ class RigAnimationTransfer(bpy.types.Operator):
                 copy.animation_data.action = new_action
             else:
                 raise AnimationMissing()
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
         
         functionCloning = {}
         for sourcePB in source.pose.bones:
@@ -640,20 +640,20 @@ def functionalizeArmature(target):
 
 def applyTransform(obj):
     sel_objs = [objs for objs in bpy.context.selected_objects]
-    for objs in sel_objs: objs.select = False    
+    for objs in sel_objs: objs.select_set(False)
     prev_mode = obj.mode # save
-    old_active = bpy.context.scene.objects.active
-    #    
-    bpy.context.scene.objects.active = obj        
-    obj.select = True    
-    bpy.ops.object.mode_set(mode='OBJECT')   
+    old_active = bpy.context.view_layer.objects.active
+    #
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.transform_apply( location = True, scale = True, rotation = True)
     #
-    bpy.ops.object.mode_set(mode=prev_mode) # restore    
-    bpy.context.scene.objects.active = old_active
-    obj.select = False
-    for objs in sel_objs: obj.select = True
-    bpy.context.scene.update()
+    bpy.ops.object.mode_set(mode=prev_mode) # restore
+    bpy.context.view_layer.objects.active = old_active
+    obj.select_set(False)
+    for objs in sel_objs: objs.select_set(True)
+    bpy.context.view_layer.update()
     
 def applyTransformSkeleton(skeleton,context):
     applyTransform(skeleton)

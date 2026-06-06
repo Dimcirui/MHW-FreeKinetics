@@ -115,7 +115,7 @@ class FreeHKOutputNode(FreeHKNode):
         if self.customizeExport:
             options = self
         else:
-            addon = bpy.context.user_preferences.addons[self.addon_key]
+            addon = bpy.context.preferences.addons[self.addon_key]
             options = addon.preferences
         if error_handler is None:
             error_handler = ErrorHandler(self,options)
@@ -221,7 +221,7 @@ class EFXFileNode(Node, FreeHKOutputNode):
             timlOffsets = TIML.getTimlOffsets(file)
         return len(timlOffsets)
     def basicStructure(self):
-        addon = bpy.context.user_preferences.addons[self.addon_key]
+        addon = bpy.context.preferences.addons[self.addon_key]
         retrograde = addon.preferences.dumb_efx_timl
         with open(self.filepath,"rb") as inf:
             if retrograde:

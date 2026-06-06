@@ -90,7 +90,7 @@ class TransferTetherSilent(_TransferTether,bpy.types.Operator):
         target_tether = self.fetchTether(context)
         target_actions = self.actionFetch(context,"LMT_Action")
         
-        addon = context.user_preferences.addons[self.addon_key]
+        addon = context.preferences.addons[self.addon_key]
         implicitTether = addon.preferences.implicit_tether 
         for action in target_actions:
             action.freehk.tetherFrame = target_tether
@@ -279,7 +279,7 @@ class CheckActionForExport(MappedActionOperator,bpy.types.Operator):
         self.displayed = False
         super().__init__(*args,**kwargs)
     def mappedOperator(self,armature,action):
-        addon = bpy.context.user_preferences.addons[self.addon_key]
+        addon = bpy.context.preferences.addons[self.addon_key]
         error_handler = DebugVerifier(addon.preferences)
         LMTActionParser(action,error_handler)
         errors = error_handler.display()
@@ -290,7 +290,7 @@ class CheckActionForExport(MappedActionOperator,bpy.types.Operator):
     def execute(self,context):
         returnCode = super().execute(context)
         if not self.displayed:
-            addon = bpy.context.user_preferences.addons[self.addon_key]
+            addon = bpy.context.preferences.addons[self.addon_key]
             error_handler = DebugVerifier(addon.preferences)
             error_handler.raiseAlert()
         return returnCode
