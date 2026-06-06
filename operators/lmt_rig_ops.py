@@ -416,7 +416,7 @@ class RigAnimationTransfer(bpy.types.Operator):
     def calculateDelta(self,bf,boneMapper):
         if bf in boneMapper:
             orthogonal = boneMapper[bf]
-            delta = (orthogonal.matrix*Vector((0,1,0,0))).normalized().to_3d()
+            delta = (orthogonal.matrix @ Vector((0,1,0,0))).normalized().to_3d()
         else:
             delta = Vector((0,1,0))
         return delta

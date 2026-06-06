@@ -191,10 +191,10 @@ def strackerForwardTransform(bone,nmatrix):
         print(bone.matrix)
         raise
     if not bone.parent:
-        return local*nmatrix
+        return local @ nmatrix
     else:
         parent = bone.parent.bone.matrix_local#bone.parent.matrix_channel.inverted()*bone.parent.matrix
-        return local*parent*nmatrix
+        return local @ parent @ nmatrix
 
 def strackerInverseTransform(bone,nmatrix):
     try:
@@ -204,10 +204,10 @@ def strackerInverseTransform(bone,nmatrix):
         print(bone.matrix)
         raise
     if not bone.parent:
-        return local*nmatrix
+        return local @ nmatrix
     else:
         parent = bone.parent.bone.matrix_local#bone.parent.matrix_channel.inverted()*bone.parent.matrix
-        return parent.inverted()*local*nmatrix
+        return parent.inverted() @ local @ nmatrix
 
 def e_output(*args,**kwargs):
     pass
