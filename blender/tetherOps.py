@@ -8,7 +8,31 @@ import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 from mathutils import Matrix,Vector,Quaternion,Euler
+from math import radians
 from .blenderOps import breakPath,transformSize,setBoneFunction,fetchBoneFunction,replaceBoneName,customizeFCurve,boneNameToId
+
+# Coordinate frame that modern MHW Model Editor (3.x+) bakes into the armature on
+# mod3 import: rotate +90 deg about X (Y-up -> Z-up) and scale 0.01.
+# The legacy mod3 importer FreeKinetics was built for kept bones in MHW-native space
+# and provided an explicit "Root" bone (boneFunction -1) as the parent of the top
+# bones. The modern importer drops that Root and bakes this conversion instead, which
+# leaves the parentless top bones (e.g. 000, 101, 102, 247-253) without the implicit
+# Root frame -> they fly off by M.inv (x100 scale, -90 deg). We re-supply it as a
+# virtual root parent for parentless bones only.
+MHW_IMPORT_MATRIX = Matrix.Rotation(radians(90.0), 4, 'X') @ Matrix.Scale(0.01, 4)
+
+def virtualRootMatrix(bone):
+    """Armature-space frame to use as the implicit parent of a parentless bone.
+    Identity for legacy armatures that still carry an explicit 'Root' bone;
+    the modern mod3 import conversion otherwise."""
+    idd = getattr(bone, "id_data", None)
+    arm = idd.data if (idd is not None and getattr(idd, "type", None) == 'ARMATURE') else idd
+    try:
+        if "Root" in arm.bones:
+            return Matrix.Identity(4)
+    except Exception:
+        pass
+    return MHW_IMPORT_MATRIX
 
 def boneFunctionId(b):
     """MHW bone-function id for an armature bone (PoseBone or Bone), or None.
@@ -199,6 +223,16 @@ def transformsForType(ttype):
         dataWrite = lambda x: x.to_euler()
     return dataRead,dataWrite
    
+def _scaledTranslation(mat, s):
+    """Scale only the translation component (rotation matrices have zero
+    translation so they are unaffected). Compensates the modern importer's
+    baked 0.01 scale + inherit_scale='NONE', under which location basis values
+    are not auto-scaled by the rig's conversion."""
+    if s != 1.0:
+        mat = mat.copy()
+        mat.translation = mat.translation * s
+    return mat
+
 def strackerForwardTransform(bone,nmatrix):
     try:
         local = bone.bone.matrix_local.inverted()#(bone.matrix.inverted()*bone.matrix_channel)
@@ -206,10 +240,17 @@ def strackerForwardTransform(bone,nmatrix):
         print(bone.name)
         print(bone.matrix)
         raise
+    vr = virtualRootMatrix(bone)
     if not bone.parent:
-        return local @ nmatrix
+        # Parentless top bones (body root + IK controllers 249/250/252...) were
+        # children of the legacy 'Root' bone; their location is already in the right
+        # space and must NOT be rescaled (rescaling collapses them to the origin).
+        return local @ vr @ nmatrix
     else:
+        # Parented bones: their location is a parent-relative delta and DOES need the
+        # rig's import scale. Scale the INPUT so forward/inverse stay exact inverses.
         parent = bone.parent.bone.matrix_local#bone.parent.matrix_channel.inverted()*bone.parent.matrix
+        nmatrix = _scaledTranslation(nmatrix, vr.to_scale()[0])
         return local @ parent @ nmatrix
 
 def strackerInverseTransform(bone,nmatrix):
@@ -219,11 +260,14 @@ def strackerInverseTransform(bone,nmatrix):
         print(bone.name)
         print(bone.matrix)
         raise
+    vr = virtualRootMatrix(bone)
     if not bone.parent:
-        return local @ nmatrix
+        return vr.inverted() @ local @ nmatrix      # parentless: no rescale (mirror of forward)
     else:
         parent = bone.parent.bone.matrix_local#bone.parent.matrix_channel.inverted()*bone.parent.matrix
-        return parent.inverted() @ local @ nmatrix
+        result = parent.inverted() @ local @ nmatrix
+        s = vr.to_scale()[0]
+        return _scaledTranslation(result, (1.0/s) if s else 1.0)
 
 def e_output(*args,**kwargs):
     pass
@@ -265,6 +309,64 @@ def tetherOperator(action,tether,preUpdateFunction,updateFunction,postUpdateFunc
 #Tether TO is based on bone function (So call updateAnimationNames)
 #Tether FROM is based on bone name (So call updateAnimationBoneFunction)
 
+def _rootChannelMatrices(action):
+    """Per-keyframe MHW matrices from the orphan pose.bones["Root"] channels."""
+    loc=[None,None,None]; rot=[None,None,None,None]
+    for fc in action.fcurves:
+        if fc.data_path == 'pose.bones["Root"].location' and fc.array_index < 3:
+            loc[fc.array_index]=fc
+        elif fc.data_path == 'pose.bones["Root"].rotation_quaternion' and fc.array_index < 4:
+            rot[fc.array_index]=fc
+    if not any(loc) and not any(rot):
+        return None
+    frames=set()
+    for fc in loc+rot:
+        if fc:
+            for k in fc.keyframe_points: frames.add(k.co[0])
+    out=[]
+    for f in sorted(frames):
+        l=Vector([(loc[i].evaluate(f) if loc[i] else 0.0) for i in range(3)])
+        if any(rot):
+            q=Quaternion([(rot[i].evaluate(f) if rot[i] else (1.0 if i==0 else 0.0)) for i in range(4)])
+        else:
+            q=Quaternion()
+        out.append((f, Matrix.Translation(l) @ q.to_matrix().to_4x4()))
+    return out
+
+def applyRootToObject(action, armature):
+    """Map the LMT Root (boneFunction -1) channel onto the armature OBJECT's animation,
+    conjugated into the rig's converted frame:  object = M . Root_mhw . M^-1 .
+    Modern mod3 armatures have no explicit 'Root' bone, so the whole-character root
+    motion (which used to live on that bone) is re-homed on the object. The armature's
+    bones are left untouched (mod3-export safe)."""
+    if armature is None:
+        return
+    try:
+        if "Root" in armature.data.bones:   # legacy armature still drives Root via its bone
+            return
+    except Exception:
+        return
+    mats=_rootChannelMatrices(action)
+    if not mats:
+        return
+    M=MHW_IMPORT_MATRIX; Mi=M.inverted()
+    armature.rotation_mode='QUATERNION'
+    for fc in list(action.fcurves):
+        if fc.data_path in ("location","rotation_quaternion"):
+            action.fcurves.remove(fc)
+    locfc=[action.fcurves.new("location",index=i) for i in range(3)]
+    rotfc=[action.fcurves.new("rotation_quaternion",index=i) for i in range(4)]
+    for f,m in mats:
+        om=M @ m @ Mi
+        t=om.to_translation(); q=om.to_quaternion()
+        for i in range(3): locfc[i].keyframe_points.insert(f,t[i],options={'FAST'})
+        for i in range(4): rotfc[i].keyframe_points.insert(f,q[i],options={'FAST'})
+    for fc in locfc+rotfc:
+        fc.update()
+    for fc in list(action.fcurves):           # drop the now-redundant orphan Root channels
+        if fc.data_path.startswith('pose.bones["Root"]'):
+            action.fcurves.remove(fc)
+
 def clearReferences(action):
     tether = action.freehk.tetherFrame
     
@@ -282,8 +384,12 @@ def targetReferenceFromClear(action,referenceFrame):
     updateFunction = applyBoneTransform
     postUpdateFunction = insertVectorialKeymatches
     tetherOperator(action,tether,preUpdateFunction,updateFunction,postUpdateFunction)
-            
+
     action.freehk.tetherFrame = referenceFrame
+    try:
+        applyRootToObject(action, referenceFrame)
+    except Exception as e:
+        print("FreeKinetics: root-to-object mapping skipped:", repr(e))
 
 """    
 def prepareExportAction(action,options):
