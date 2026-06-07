@@ -785,7 +785,7 @@ class RedefineRestPose(bpy.types.Operator):
         return max(abs(m[r][c] - (1.0 if r == c else 0.0))
                    for r in range(4) for c in range(4)) <= eps
 
-    def _offsetAction(self, arm, action, changed, Cinv):
+    def _offsetAction(self, arm, action, changed, D):
         count = 0
         for bname in changed:
             prefix = 'pose.bones["%s"].' % bname
@@ -800,7 +800,7 @@ class RedefineRestPose(bpy.types.Operator):
             if not present:
                 continue
             frames = sorted({round(k.co[0], 4) for fc in present for k in fc.keyframe_points})
-            ci = Cinv[bname]
+            ci = D[bname]
             pb = arm.pose.bones.get(bname)
             rmode = pb.rotation_mode if pb else 'QUATERNION'
             useEuler = any(eul) or (rmode not in ('QUATERNION', 'AXIS_ANGLE') and not any(quat))
@@ -844,19 +844,33 @@ class RedefineRestPose(bpy.types.Operator):
         prev_mode = arm.mode
         if arm.mode != 'POSE':
             bpy.ops.object.mode_set(mode='POSE')
-        # 1. capture the corrective basis C per bone; flag the ones the user actually moved
-        C = {pb.name: pb.matrix_basis.copy() for pb in arm.pose.bones}
-        changed = set(n for n, m in C.items() if not self._isIdentity(m))
+        context.view_layer.update()
+        # 1. Capture, per bone, the parent-relative rest->pose delta from the EVALUATED pose
+        #    matrices (constraint-safe: this is exactly what armature_apply bakes as the new
+        #    rest). D = poseL^-1 @ restL is the left-offset to apply to each animated basis so
+        #    the visual stays put. Without constraints this equals matrix_basis^-1.
+        D = {}
+        changed = set()
+        for pb in arm.pose.bones:
+            bl = pb.bone
+            if pb.parent:
+                restL = pb.parent.bone.matrix_local.inverted() @ bl.matrix_local
+                poseL = pb.parent.matrix.inverted() @ pb.matrix
+            else:
+                restL = bl.matrix_local.copy()
+                poseL = pb.matrix.copy()
+            D[pb.name] = poseL.inverted() @ restL
+            if not self._isIdentity(restL.inverted() @ poseL):
+                changed.add(pb.name)
         if not changed:
             self.report({'WARNING'}, "Current pose equals the rest pose - pose the bones first")
             return {'CANCELLED'}
         # 2. bake the current pose as the new rest
         bpy.ops.pose.armature_apply(selected=False)
-        # 3. re-express every action's keyframes for the moved bones: new = C^-1 . old
-        Cinv = {n: C[n].inverted() for n in changed}
+        # 3. re-express every action's keyframes for the moved bones: new = D . old
         fixed = 0
         for action in bpy.data.actions:
-            fixed += self._offsetAction(arm, action, changed, Cinv)
+            fixed += self._offsetAction(arm, action, changed, D)
         if arm.mode != prev_mode:
             try: bpy.ops.object.mode_set(mode=prev_mode)
             except Exception: pass
