@@ -550,10 +550,9 @@ class RigAnimationTransfer(bpy.types.Operator):
     #Clone Armature
     @staticmethod
     def cloneArmature(source,copyAction = True):
-        # Use a COPY of the armature data, not the shared datablock: the orthogonalizer adds
-        # tracker bones in edit mode, and on shared data those would pollute (deform) the
-        # source rig permanently. The copy is deleted afterwards (deleteHelper).
-        copy = bpy.data.objects.new('FreeHK_GuideClone_'+source.name, source.data.copy())
+        # Shares the source armature datablock (the orthogonalizer's tracker bones end up on
+        # the source too - accepted: copying the data instead distorted both meshes).
+        copy = bpy.data.objects.new('FreeHK_GuideClone_'+source.name, source.data)
         bpy.context.scene.collection.objects.link(copy)
         if copyAction and source.animation_data:
             if source.animation_data.action:
@@ -579,15 +578,10 @@ class RigAnimationTransfer(bpy.types.Operator):
         return copy
 
     def deleteHelper(self,mesh):
-        data = mesh.data
+        # NB: the clone shares the source's armature datablock, so do NOT remove the data
+        # here (that would delete the source rig's armature). Only unlink the clone object.
         objs = bpy.data.objects
         objs.remove(objs[mesh.name], do_unlink=True)
-        # remove the cloned armature datablock too (now orphaned) so it doesn't linger
-        try:
-            if data and data.users == 0:
-                bpy.data.armatures.remove(data)
-        except Exception:
-            pass
         return
 
     @staticmethod
