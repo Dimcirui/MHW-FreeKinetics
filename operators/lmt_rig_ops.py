@@ -7,7 +7,7 @@ Created on Sat Aug 14 19:00:29 2021
 import bpy
 import os
 from bpy.app.handlers import persistent
-from mathutils import Vector
+from mathutils import Vector, Matrix, Quaternion, Euler
 from ..blender.blenderOps import fetchBoneFunction,animationLength,completeBasis,boneNameToId
 from ..blender.tetherOps import updateAnimationBoneFunctions,boneFunctionId
 from ..ui.HKIcons import pcoll
@@ -190,6 +190,7 @@ class RigTransferTools(bpy.types.Panel):
         layout.prop(props,"rigType")        
         layout.prop(props,"sourceName")
         layout.prop(props,"targetName")
+        layout.operator("freehk.redefine_rest_pose",icon = "ARMATURE_DATA")
         layout.prop(props,"bake")
         if props.bake:
             layout.prop(props,"groundRoot")
@@ -764,6 +765,104 @@ class CATBoneFunction(bpy.types.Operator):
         return {"FINISHED"}
     
     
+class RedefineRestPose(bpy.types.Operator):
+    bl_idname = "freehk.redefine_rest_pose"
+    bl_label = "Redefine Rest Pose (Keep Animation)"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = ("Set the active armature's CURRENT pose as its new rest pose while "
+                      "re-expressing all animation so it looks unchanged - e.g. convert an MMD "
+                      "A-pose rig to T-pose before Rig Transfer. Workflow: unassign the action, "
+                      "rotate the shoulder/upper-arm bones into the target rest, then run this; "
+                      "only bones you moved are touched. Re-assign the action afterwards.")
+
+    @classmethod
+    def poll(cls, context):
+        o = context.active_object
+        return o and o.type == 'ARMATURE'
+
+    @staticmethod
+    def _isIdentity(m, eps=1e-5):
+        return max(abs(m[r][c] - (1.0 if r == c else 0.0))
+                   for r in range(4) for c in range(4)) <= eps
+
+    def _offsetAction(self, arm, action, changed, Cinv):
+        count = 0
+        for bname in changed:
+            prefix = 'pose.bones["%s"].' % bname
+            loc=[None,None,None]; quat=[None,None,None,None]; eul=[None,None,None]; scl=[None,None,None]
+            for fc in action.fcurves:
+                dp = fc.data_path
+                if dp == prefix+"location" and fc.array_index < 3: loc[fc.array_index]=fc
+                elif dp == prefix+"rotation_quaternion" and fc.array_index < 4: quat[fc.array_index]=fc
+                elif dp == prefix+"rotation_euler" and fc.array_index < 3: eul[fc.array_index]=fc
+                elif dp == prefix+"scale" and fc.array_index < 3: scl[fc.array_index]=fc
+            present = [c for c in (loc+quat+eul+scl) if c]
+            if not present:
+                continue
+            frames = sorted({round(k.co[0], 4) for fc in present for k in fc.keyframe_points})
+            ci = Cinv[bname]
+            pb = arm.pose.bones.get(bname)
+            rmode = pb.rotation_mode if pb else 'QUATERNION'
+            useEuler = any(eul) or (rmode not in ('QUATERNION', 'AXIS_ANGLE') and not any(quat))
+            order = rmode if rmode in {'XYZ','XZY','YXZ','YZX','ZXY','ZYX'} else 'XYZ'
+            out = []
+            for f in frames:
+                lv = Vector([loc[i].evaluate(f) if loc[i] else 0.0 for i in range(3)])
+                if useEuler:
+                    Rm = Euler([eul[i].evaluate(f) if eul[i] else 0.0 for i in range(3)], order).to_matrix().to_4x4()
+                elif any(quat):
+                    Rm = Quaternion([quat[i].evaluate(f) if quat[i] else (1.0 if i==0 else 0.0) for i in range(4)]).to_matrix().to_4x4()
+                else:
+                    Rm = Matrix.Identity(4)
+                Sm = Matrix.Identity(4)
+                for i in range(3): Sm[i][i] = scl[i].evaluate(f) if scl[i] else 1.0
+                Bnew = ci @ (Matrix.Translation(lv) @ Rm @ Sm)
+                out.append((f, Bnew.to_translation(), Bnew.to_quaternion(), Bnew.to_scale()))
+            for i in range(3):
+                if loc[i]:
+                    for f,nl,nq,ns in out: loc[i].keyframe_points.insert(f, nl[i], options={'FAST'})
+                    loc[i].update()
+            if useEuler:
+                for i in range(3):
+                    if eul[i]:
+                        for f,nl,nq,ns in out: eul[i].keyframe_points.insert(f, nq.to_euler(order)[i], options={'FAST'})
+                        eul[i].update()
+            else:
+                for i in range(4):
+                    if quat[i]:
+                        for f,nl,nq,ns in out: quat[i].keyframe_points.insert(f, nq[i], options={'FAST'})
+                        quat[i].update()
+            for i in range(3):
+                if scl[i]:
+                    for f,nl,nq,ns in out: scl[i].keyframe_points.insert(f, ns[i], options={'FAST'})
+                    scl[i].update()
+            count += 1
+        return count
+
+    def execute(self, context):
+        arm = context.active_object
+        prev_mode = arm.mode
+        if arm.mode != 'POSE':
+            bpy.ops.object.mode_set(mode='POSE')
+        # 1. capture the corrective basis C per bone; flag the ones the user actually moved
+        C = {pb.name: pb.matrix_basis.copy() for pb in arm.pose.bones}
+        changed = set(n for n, m in C.items() if not self._isIdentity(m))
+        if not changed:
+            self.report({'WARNING'}, "Current pose equals the rest pose - pose the bones first")
+            return {'CANCELLED'}
+        # 2. bake the current pose as the new rest
+        bpy.ops.pose.armature_apply(selected=False)
+        # 3. re-express every action's keyframes for the moved bones: new = C^-1 . old
+        Cinv = {n: C[n].inverted() for n in changed}
+        fixed = 0
+        for action in bpy.data.actions:
+            fixed += self._offsetAction(arm, action, changed, Cinv)
+        if arm.mode != prev_mode:
+            try: bpy.ops.object.mode_set(mode=prev_mode)
+            except Exception: pass
+        self.report({'INFO'}, "Rest redefined; %d bone(s) moved, animation preserved." % len(changed))
+        return {'FINISHED'}
+
 class OpenBmapFolder(bpy.types.Operator):
     bl_idname = "freehk.open_bmap_folder"
     bl_label = "Open Bmap Folder"
@@ -811,7 +910,7 @@ class ApplyBmap(bpy.types.Operator):
                     % (fname, tagged, len(source.pose.bones)))
         return {'FINISHED'}
 
-classes = [RigTransferData, PlatformIKMapping, PlatformGroup, PlatformSingleton, RigTransferTools,RigAnimationTransfer,CATBoneFunction,OpenBmapFolder,ApplyBmap]
+classes = [RigTransferData, PlatformIKMapping, PlatformGroup, PlatformSingleton, RigTransferTools,RigAnimationTransfer,CATBoneFunction,OpenBmapFolder,ApplyBmap,RedefineRestPose]
 
 def register():
     for cls in classes:
