@@ -122,6 +122,7 @@ class RigTransferData(bpy.types.PropertyGroup):
     bake: bpy.props.BoolProperty(name = "Bake",default = True)
     groundRoot: bpy.props.BoolProperty(name = "Root as Ground Level", description = "Set the Root as the ground level after baking",default = True)
     bmapFile: bpy.props.EnumProperty(name = "Bmap", description = "External bone map to tag the source rig with", items = getBmapItems)
+    timeScale: bpy.props.FloatProperty(name = "Time Scale", description = "Stretch the baked animation in time. 2 = half speed (twice as long), 0.5 = double speed", default = 1.0, min = 0.01)
     
     
 class PlatformIKMapping(bpy.types.PropertyGroup):
@@ -196,21 +197,12 @@ class RigTransferTools(bpy.types.Panel):
         row.prop(props,"bmapFile",text = "Bmap")
         row.operator("freehk.open_bmap_folder",text = "",icon = "FILE_FOLDER")
         layout.operator("freehk.apply_bmap",icon = "BONE_DATA")
-        layout.operator("freehk.rig_transfer",icon = "MOD_ARMATURE")
-        #col = layout.column(align = True)
-        platform = bpy.context.scene.freehk_rig_ops_platform
-        for bone in platform.presets[props.rigType].bone_presets:
-            box = layout.box()
-            box = box.column(align=True)
-            box.label(text=bone.platformName)
-            row = box.row(align = True)
-            if props.rigType == "Custom":
-                row.prop(bone,"platformBoneFunction")
-            else:
-                row.label(text="Platform Function: "+str(bone.platformBoneFunction))
-            row.prop(bone,"platformBoneTarget")
-            box.prop(bone,"platformTracking")
-                
+        row = layout.row(align = True)
+        row.operator("freehk.rig_transfer",icon = "MOD_ARMATURE")
+        row.prop(props,"timeScale",text = "Time x")
+        # IK platform mapping list removed: IK controllers are placed afterwards by the
+        # Recalculate Body IK / Recalculate Ground IK operators (Action Tools panel).
+
 
 platformDefaults = {
                     "Humanoid":[("Neck",254,3,"Translation"),
@@ -544,7 +536,7 @@ class RigAnimationTransfer(bpy.types.Operator):
     def bakeOperation(self,context,source,target):
         if not source.animation_data or not source.animation_data.action:
             raise AnimationMissing("No animation data to bake")
-        actionname = "FreeHK_"+source.animation_data.action.name
+        actionname = "FK_"+source.animation_data.action.name
         if not target.animation_data:
             animData = target.animation_data_create()
         else:
@@ -558,12 +550,14 @@ class RigAnimationTransfer(bpy.types.Operator):
     #Clone Armature
     @staticmethod
     def cloneArmature(source,copyAction = True):
-        #copy = source.copy()
-        copy = bpy.data.objects.new('FreeHK_GuideClone_'+source.name, source.data)
+        # Use a COPY of the armature data, not the shared datablock: the orthogonalizer adds
+        # tracker bones in edit mode, and on shared data those would pollute (deform) the
+        # source rig permanently. The copy is deleted afterwards (deleteHelper).
+        copy = bpy.data.objects.new('FreeHK_GuideClone_'+source.name, source.data.copy())
         bpy.context.scene.collection.objects.link(copy)
         if copyAction and source.animation_data:
             if source.animation_data.action:
-                new_action = bpy.data.actions.new(name = "FreeHK_"+source.animation_data.action.name)
+                new_action = bpy.data.actions.new(name = "FK_"+source.animation_data.action.name)
                 copy.animation_data_create()
                 copy.animation_data.action = new_action
             else:
@@ -585,9 +579,29 @@ class RigAnimationTransfer(bpy.types.Operator):
         return copy
 
     def deleteHelper(self,mesh):
+        data = mesh.data
         objs = bpy.data.objects
         objs.remove(objs[mesh.name], do_unlink=True)
+        # remove the cloned armature datablock too (now orphaned) so it doesn't linger
+        try:
+            if data and data.users == 0:
+                bpy.data.armatures.remove(data)
+        except Exception:
+            pass
         return
+
+    @staticmethod
+    def scaleActionTime(action, factor):
+        """Stretch all keyframe timings by factor (2 = half speed). Applied to the baked
+        action before it is finalized as an LMT action."""
+        if not action or factor == 1.0 or factor <= 0:
+            return
+        for fc in action.fcurves:
+            for kf in fc.keyframe_points:
+                kf.co[0] *= factor
+                kf.handle_left[0] *= factor
+                kf.handle_right[0] *= factor
+            fc.update()
     
     def nullRootY(self,action):
         for fcurve in action.fcurves:
@@ -655,6 +669,7 @@ class RigAnimationTransfer(bpy.types.Operator):
         self.humanoid = options.rigType == "Humanoid"
         self.bake = options.bake
         self.groundRoot = options.groundRoot
+        self.timeScale = options.timeScale
         self.platformMapping = self.generatePlatformMapping(mapping)
     
     def transferFunctions(self,source,target):
@@ -693,6 +708,7 @@ class RigAnimationTransfer(bpy.types.Operator):
         self.addConstraints(source,copy,target)
         if self.bake:
             action = self.bakeOperation(context,source,target)
+            self.scaleActionTime(action, self.timeScale)
             self.FreeHKProps(action,target)
             if self.groundRoot:
                 self.nullRootY(action) 
