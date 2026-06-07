@@ -644,9 +644,12 @@ def recalculateGroundIKBones(armature, action, mapping=None):
             if fcv.data_path in (path + "location", path + "rotation_quaternion", path + "scale"):
                 action.fcurves.remove(fcv)
         ik.rotation_mode = 'QUATERNION'
-        # Pin the bone HEAD at the world position: pure-translation armature-space matrix
-        # (identity rotation, scale 1). world_off is in world metres from the world origin.
-        ik.matrix = Matrix.Translation(Mw_inv @ world_off)
+        # Pin the bone HEAD at the world position while keeping the bone's REST orientation
+        # (so it points +Z like the rest of the rig, not +Y as an identity matrix would).
+        # Start from the rest matrix (rotation + scale 1) and override only the translation.
+        M = ik.bone.matrix_local.copy()
+        M.translation = Mw_inv @ world_off
+        ik.matrix = M
         ik.keyframe_insert("location", frame=0)
         ik.keyframe_insert("rotation_quaternion", frame=0)
     _tagIKBoneFunctions(action, [c[0] for c in consts])
