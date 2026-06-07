@@ -140,7 +140,7 @@ class EncodingObject():
         return None
     def calculateTypeBuffer(self,tether):
         if self.isReference():
-            return 2 if self.isRotation else 1
+            return 2 if self.isRotation() else 1   # was self.isRotation (bound method, always truthy)
         monoaxial = self.monoaxial()
         if monoaxial: return monoaxial           
         if self.isRotation():
