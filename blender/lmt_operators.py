@@ -11,7 +11,7 @@ from .blenderOps import (customizeFCurve,foldFCurve,addKeyframe,getActions,fetch
                         previewStrip,rescaleAnimation,matchBoneId)
 from .tetherOps import (transferTether, updateAnimationNames,updateAnimationBoneFunctions,
                         completeMissingChannels,synchronizeKeyframes,resampleAction,resampleFCurve,
-                        getBoneFromPath,boneFunctionId,recalculateIKBones)
+                        getBoneFromPath,boneFunctionId,recalculateBodyIKBones,recalculateGroundIKBones)
 from .lmt_exporter import LMTActionParser
 from ..error_handling.errorController import DebugVerifier
 from .lmt_tools import encodingTypes
@@ -274,17 +274,29 @@ class MaximizeQuality(MappedActionOperator,bpy.types.Operator):
             if not fetchEncodingType(fcurve):
                 setMaxEncoding(fcurve)
 
-class RecalculateIKBones(MappedActionOperator,bpy.types.Operator):
-    bl_idname = "freehk.recalculate_ik_bones"
-    bl_label = "Recalculate IK Bones"
+class RecalculateBodyIKBones(MappedActionOperator,bpy.types.Operator):
+    bl_idname = "freehk.recalculate_body_ik_bones"
+    bl_label = "Recalculate Body IK Bones"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
-    bl_description = ("Bake the IK controller bones so they track their deform-bone targets "
+    bl_description = ("Bake the body IK controllers so they track their deform-bone targets "
                       "(hand IK -> palm, head IK -> head). Fixes baked / authored animations where "
-                      "the IK bones were left at rest, which snaps hands to the body centre in game. "
+                      "those IK bones were left at rest (hands snap to the body centre in game). "
                       "Requires a tether; operates on the tethered (posed) action.")
     limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
-        recalculateIKBones(armature,action)
+        recalculateBodyIKBones(armature,action)
+
+class RecalculateGroundIKBones(MappedActionOperator,bpy.types.Operator):
+    bl_idname = "freehk.recalculate_ground_ik_bones"
+    bl_label = "Recalculate Ground IK Bones"
+    bl_options = {'REGISTER', 'PRESET', 'UNDO'}
+    bl_description = ("Pin the ground/anchor IK controllers (251/253) to a constant point. "
+                      "These have no deform bone to follow, so this is a best-effort baseline that "
+                      "may need manual touch-up (edit IK_GROUND_MAP per character). "
+                      "Requires a tether; operates on the tethered (posed) action.")
+    limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
+    def mappedOperator(self,armature,action):
+        recalculateGroundIKBones(armature,action)
 
 class CheckActionForExport(MappedActionOperator,bpy.types.Operator):
     bl_idname = "freehk.check_export"
@@ -369,7 +381,7 @@ classes = [
     CreateFCurve,FoldFCurve,MatchBoneId,AddKeyframes,TransferTether,TransferTetherSilent,ClearTether,UpdateBoneFunctions,UpdateAnimationNames,
     CompleteChannels,SynchronizeKeyframes,ResampleFCurve,ResampleSelectedFCurve,GlobalEnableFCurves,CheckActionForExport,
     ResampleSelectedTIMLFCurve, ClearEncoding, MaximizeQuality, PreviewActionsInStrip, RescaleAnimation,
-    RecalculateIKBones
+    RecalculateBodyIKBones, RecalculateGroundIKBones
 ]
 
 def register():

@@ -249,20 +249,20 @@ lmtTools = ["clear_tether","transform_tether_silent","transform_tether","update_
             "complete_channels","synchronize_keyframes",
             "resample_fcurve","resample_action","create_fcurve_action",
             "clear_buffer_quality","maximize_buffer_quality",
-            "recalculate_ik_bones",
+            "recalculate_body_ik_bones","recalculate_ground_ik_bones",
             "check_export"
             ]
 lmtDescriptions = ["Clear %sTethers","Transfer %sTethers","Transfer %s& Update","Update %sNames",
                    "Update %sBone Functions","Complete %sChannels","Synchronize %sKeyframes",
                    "Resample %sSelected FCurves","Resample %sFCurves","Enable %sFree Kinetics FCurves",
                    "Clear %sEncodings","Maximize %sEncodings",
-                   "Recalculate %sIK Bones",
+                   "Recalculate %sBody IK Bones","Recalculate %sGround IK Bones",
                    "Check %sfor Export"]
 lmtIcons = ["FREEHK_CLEAR","FREEHK_TRANSFER_SILENT","FREEHK_TRANSFER","FREEHK_NAMES","FREEHK_BONES",
             "FREEHK_CHANNELS","FREEHK_SYNCRHONIZE",
             "FREEHK_RESAMPLE","FREEHK_RESAMPLE","FREEHK",
             "FREEHK_CLEAR_ENCODE","FREEHK_MAX_ENCODE",
-            "FREEHK",
+            "FREEHK","FREEHK",
             "FREEHK_CHECK"]
 
 #layout.operator("freehk.resample_fcurve",icon_value=pcoll["FREEHK"].icon_id, text="Add Free Kinetics Props")

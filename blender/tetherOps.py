@@ -511,54 +511,78 @@ def transferTether(actions,tether):
         clearReferences(action, tether)
         targetReferenceFromClear(action, tether)
 
-# IK controller bone-function -> (target deform bone-function, copy mode).
+# Body IK controllers: bone-function -> (target deform bone-function, copy mode).
 # Empirically tuned for the modern MhBone humanoid: hand IK tracks the PALM (057/040),
 # not the wrist (012/008), and head IK tracks the head bone (004, position only, per the
 # game's "Translation" platform default). Edit/extend this table to cover more rigs.
 #   mode 'FULL' = location + rotation ; mode 'LOC' = location only.
-IK_RECALC_MAP = [
+# These HAVE a deform bone to follow, so the result is faithful.
+IK_BODY_MAP = [
     (247, 57, 'FULL'),   # Right hand IK -> right palm
     (248, 40, 'FULL'),   # Left  hand IK -> left  palm
     (252,  4, 'LOC'),    # Head IK        -> head (position only)
 ]
 
-# IK controller bone-function -> constant MHW-space location (identity rotation, single
-# reference frame). Some IK bones are not driven by a deform bone but pinned to a fixed
-# point. Verified against the original co00_06.lmt: 253 ("ground / virtual horizon") is
-# always at the MHW origin with identity rotation across every action.
-IK_CONST_MAP = [
+# Ground/anchor IK controllers: bone-function -> constant MHW-space location (identity
+# rotation, single reference frame). These have NO deform bone to track, so they are pinned
+# to a fixed point and the result is a best-effort baseline that usually needs manual touch-up.
+# Verified against the original co00_06.lmt: 253 ("ground / virtual horizon") sits at the MHW
+# origin across every action; 251 (upper-body/neck-base anchor) baselines around (0,10,0).
+IK_GROUND_MAP = [
     (253, (0.0,  0.0, 0.0)),   # ground anchor = MHW origin
     (251, (0.0, 10.0, 0.0)),   # neck-base / upper-body anchor: stable baseline (Y=10, X/Z=0)
 ]
+# NOTE (Rig Transfer / bmap roadmap): when a bmap already maps a source bone onto one of
+# these IK controllers (e.g. MMD's "全ての親" -> MhBone_253), the transfer should use that
+# mapping directly and only fall back to recalculateBody/GroundIKBones for the IK bones the
+# bmap leaves unmapped.
 
-def recalculateIKBones(armature, action, mapping=None):
-    """Bake the IK controller bones so each one coincides (in armature/pose space) with
-    its target deform bone, frame by frame, writing the result into `action`. Fixes baked
-    or authored animations where the IK controllers were never keyed (left at rest), which
-    makes the game snap hands to the body centre / feet through the floor. The action must
-    already be tethered to `armature` (pose space); export then inverts to MHW space.
-    Non-destructive to the armature (no bones added/removed; only this action's keyframes)."""
+def _bakeAssign(armature, action):
+    if not armature.animation_data:
+        armature.animation_data_create()
+    prev = armature.animation_data.action
+    armature.animation_data.action = action
+    return prev
+
+def _wipeIKChannels(action, bone):
+    path = 'pose.bones["%s"].' % bone.name
+    for fcv in list(action.fcurves):
+        if fcv.data_path == path + "location" or fcv.data_path == path + "rotation_quaternion":
+            action.fcurves.remove(fcv)
+    bone.rotation_mode = 'QUATERNION'
+
+def _tagIKBoneFunctions(action, bones):
+    for ik in bones:
+        bf = boneFunctionId(ik)
+        if bf is None:
+            continue
+        path = 'pose.bones["%s"].' % ik.name
+        for fcv in action.fcurves:
+            if fcv.data_path.startswith(path):
+                setBoneFunction(fcv, bf)
+
+def recalculateBodyIKBones(armature, action, mapping=None):
+    """Bake the BODY IK controllers (hands, head) so each coincides in armature/pose space
+    with its target deform bone, sampled at the target's own keyframes, writing into `action`.
+    Fixes baked/authored animations where these controllers were left at rest (hands snap to
+    the body centre in game). Action must be tethered to `armature`; export inverts to MHW.
+    Non-destructive to the armature (only this action's keyframes change)."""
     if armature is None or action is None:
         return
     if mapping is None:
-        mapping = IK_RECALC_MAP
+        mapping = IK_BODY_MAP
     fmap = boneFunctionMap(armature)
     pairs = [(fmap[ik], fmap[tg], mode) for ik, tg, mode in mapping
              if ik in fmap and tg in fmap]
-    consts = [(fmap[ik], Vector(loc)) for ik, loc in IK_CONST_MAP if ik in fmap]
-    if not pairs and not consts:
-        print("Free Kinetics: Recalculate IK - no matching IK/target bones on '%s'." % armature.name)
+    if not pairs:
+        print("Free Kinetics: Recalculate Body IK - no matching IK/target bones on '%s'." % armature.name)
         return
-    if not armature.animation_data:
-        armature.animation_data_create()
-    prevAction = armature.animation_data.action
-    armature.animation_data.action = action
+    prevAction = _bakeAssign(armature, action)
     fc = action.freehk.frameCount
     if not fc or fc < 1:
         fc = int(max((k.co[0] for f in action.fcurves for k in f.keyframe_points), default=1))
-    # Sample only at the frames the TARGET bones are actually keyed on - follow the source
-    # animation's own keyframe structure instead of force-keying every frame (which would
-    # bloat the LMT). For a fully-baked source these are every frame anyway.
+    # Sample only at the frames the TARGET bones are actually keyed on - follow the source's
+    # own keyframe structure rather than force-keying every frame (avoids LMT bloat).
     sampleFrames = set()
     for _, tg, _ in pairs:
         p = 'pose.bones["%s"].' % tg.name
@@ -567,13 +591,8 @@ def recalculateIKBones(armature, action, mapping=None):
                 for k in fcv.keyframe_points:
                     sampleFrames.add(int(round(k.co[0])))
     sampleFrames = sorted(sampleFrames) if sampleFrames else list(range(0, int(fc) + 1))
-    # wipe any stale IK location/rotation channels first
     for ik, _, _ in pairs:
-        path = 'pose.bones["%s"].' % ik.name
-        for fcv in list(action.fcurves):
-            if fcv.data_path == path + "location" or fcv.data_path == path + "rotation_quaternion":
-                action.fcurves.remove(fcv)
-        ik.rotation_mode = 'QUATERNION'
+        _wipeIKChannels(action, ik)
     scene = bpy.context.scene
     view = bpy.context.view_layer
     saved = scene.frame_current
@@ -593,27 +612,33 @@ def recalculateIKBones(armature, action, mapping=None):
                 ik.keyframe_insert("location", frame=f)
     scene.frame_set(saved)
     view.update()
-    # Constant IK bones (e.g. 253 ground anchor): pin to a fixed MHW point. Convert the
-    # MHW target through the import-forward transform to get the matching pose basis, then
-    # write a single reference keyframe at frame 0. No frame loop needed (constant).
+    _tagIKBoneFunctions(action, [p[0] for p in pairs])
+    armature.animation_data.action = prevAction if prevAction else action
+
+def recalculateGroundIKBones(armature, action, mapping=None):
+    """Pin the GROUND/anchor IK controllers (251/253) to a constant MHW point (single
+    reference keyframe). These have no deform bone to follow, so this is a best-effort
+    baseline - expect to fine-tune the MHW values in IK_GROUND_MAP per character. The pose
+    basis is derived by running the MHW target through the import-forward transform; export
+    then inverts it back to the exact MHW constant. Non-destructive to the armature."""
+    if armature is None or action is None:
+        return
+    if mapping is None:
+        mapping = IK_GROUND_MAP
+    fmap = boneFunctionMap(armature)
+    consts = [(fmap[ik], Vector(loc)) for ik, loc in mapping if ik in fmap]
+    if not consts:
+        print("Free Kinetics: Recalculate Ground IK - no matching IK bones on '%s'." % armature.name)
+        return
+    prevAction = _bakeAssign(armature, action)
     for ik, mhwloc in consts:
-        path = 'pose.bones["%s"].' % ik.name
-        for fcv in list(action.fcurves):
-            if fcv.data_path == path + "location" or fcv.data_path == path + "rotation_quaternion":
-                action.fcurves.remove(fcv)
-        ik.rotation_mode = 'QUATERNION'
+        _wipeIKChannels(action, ik)
         ik.matrix_basis = strackerForwardTransform(ik, Matrix.Translation(mhwloc))
         ik.keyframe_insert("location", frame=0)
         ik.keyframe_insert("rotation_quaternion", frame=0)
-    # tag new channels with Free Kinetics props (boneFunction) so export keeps them
-    for ik in [p[0] for p in pairs] + [c[0] for c in consts]:
-        bf = boneFunctionId(ik)
-        path = 'pose.bones["%s"].' % ik.name
-        for fcv in action.fcurves:
-            if fcv.data_path.startswith(path) and bf is not None:
-                setBoneFunction(fcv, bf)
+    _tagIKBoneFunctions(action, [c[0] for c in consts])
     armature.animation_data.action = prevAction if prevAction else action
-        
+
 def completeMissingChannels(action): 
     errs, curveMap = verifyTuplings(action)
     for (actionPath,fold),errType in errs:
