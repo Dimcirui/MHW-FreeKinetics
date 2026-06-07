@@ -526,14 +526,13 @@ IK_BODY_MAP = [
     (254,  3, 'LOC'),    # Neck IK        -> neck (position only)
 ]
 
-# Ground/anchor IK controllers: bone-function -> constant MHW-space location (identity
-# rotation, single reference frame). These have NO deform bone to track, so they are pinned
-# to a fixed point and the result is a best-effort baseline that usually needs manual touch-up.
-# Verified against the original co00_06.lmt: 253 ("ground / virtual horizon") sits at the MHW
-# origin across every action; 251 (upper-body/neck-base anchor) baselines around (0,10,0).
+# Ground/anchor IK controllers: bone-function -> WORLD-space offset (Blender metres) from
+# the world origin. These have NO deform bone to track, so they are pinned to a fixed world
+# point (default the world origin). Align the rig's feet to the world ground before baking so
+# the world origin == ground. Best-effort baseline; usually fine-tuned by hand afterwards.
 IK_GROUND_MAP = [
-    (253, (0.0,  0.0, 0.0)),   # ground anchor = MHW origin
-    (251, (0.0, 10.0, 0.0)),   # neck-base / upper-body anchor: stable baseline (Y=10, X/Z=0)
+    (253, (0.0, 0.0, 0.0)),   # ground anchor -> world origin
+    (251, (0.0, 0.0, 0.0)),   # upper-body anchor -> world origin (raise via +Z here if needed)
 ]
 # NOTE (Rig Transfer / bmap roadmap): when a bmap already maps a source bone onto one of
 # these IK controllers (e.g. MMD's "全ての親" -> MhBone_253), the transfer should use that
@@ -619,24 +618,35 @@ def recalculateBodyIKBones(armature, action, mapping=None):
     armature.animation_data.action = prevAction if prevAction else action
 
 def recalculateGroundIKBones(armature, action, mapping=None):
-    """Pin the GROUND/anchor IK controllers (251/253) to a constant MHW point (single
-    reference keyframe). These have no deform bone to follow, so this is a best-effort
-    baseline - expect to fine-tune the MHW values in IK_GROUND_MAP per character. The pose
-    basis is derived by running the MHW target through the import-forward transform; export
-    then inverts it back to the exact MHW constant. Non-destructive to the armature."""
+    """Pin the GROUND/anchor IK controllers (251/253) to a fixed WORLD point (single
+    reference keyframe), default the world origin. These have no deform bone to follow;
+    align the rig's feet to the world ground first so the world origin == ground. The bone
+    head is placed directly in world space (identity orientation, scale 1) - it does NOT
+    ride the COG/object origin. Best-effort baseline; fine-tune IK_GROUND_MAP per character.
+    Non-destructive to the armature."""
     if armature is None or action is None:
         return
     if mapping is None:
         mapping = IK_GROUND_MAP
     fmap = boneFunctionMap(armature)
-    consts = [(fmap[ik], Vector(loc)) for ik, loc in mapping if ik in fmap]
+    consts = [(fmap[ik], Vector(off)) for ik, off in mapping if ik in fmap]
     if not consts:
         print("Free Kinetics: Recalculate Ground IK - no matching IK bones on '%s'." % armature.name)
         return
     prevAction = _bakeAssign(armature, action)
-    for ik, mhwloc in consts:
-        _wipeIKChannels(action, ik)
-        ik.matrix_basis = strackerForwardTransform(ik, Matrix.Translation(mhwloc))
+    bpy.context.view_layer.update()
+    Mw_inv = armature.matrix_world.inverted()
+    for ik, world_off in consts:
+        # wipe stale location / rotation / SCALE channels (scale matters: a leftover 0.01
+        # from a previous run or a bake shrinks the bone 100x)
+        path = 'pose.bones["%s"].' % ik.name
+        for fcv in list(action.fcurves):
+            if fcv.data_path in (path + "location", path + "rotation_quaternion", path + "scale"):
+                action.fcurves.remove(fcv)
+        ik.rotation_mode = 'QUATERNION'
+        # Pin the bone HEAD at the world position: pure-translation armature-space matrix
+        # (identity rotation, scale 1). world_off is in world metres from the world origin.
+        ik.matrix = Matrix.Translation(Mw_inv @ world_off)
         ik.keyframe_insert("location", frame=0)
         ik.keyframe_insert("rotation_quaternion", frame=0)
     _tagIKBoneFunctions(action, [c[0] for c in consts])
