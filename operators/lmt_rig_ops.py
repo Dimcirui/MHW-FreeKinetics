@@ -277,11 +277,11 @@ def clearConstraints(skeleton,action):
                 valid[bone].add("location")
                 valid[bone].add("scale")
             else:
-                raise KeyError(constraint.type)
-        print(bone.name)
-        print(valid[bone])
-            
-    
+                # Unknown constraint type (e.g. 'IK', 'LIMIT_*' on a source rig): it does
+                # not correspond to a copy-transform we added, so it marks no valid channel.
+                # Ignore it instead of crashing; it is removed in the cleanup loop below.
+                pass
+
     for fcurve in action.fcurves:
         if "." not in fcurve.data_path:
             continue
@@ -320,7 +320,7 @@ def bakeAnimation(context,target):
                      clear_parents=False, 
                      use_current_action=True, 
                      bake_types={'POSE'})
-    clearConstraints(active,active.animation_data.action)
+    clearConstraints(target,target.animation_data.action)
     #Don't Clear Constraints
     #Use them to know what parts of the animation to delete after the baking process
     target.select_set(False)
