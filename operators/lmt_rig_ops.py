@@ -5,9 +5,10 @@ Created on Sat Aug 14 19:00:29 2021
 @author: AsteriskAmpersand
 """
 import bpy
+import os
 from bpy.app.handlers import persistent
 from mathutils import Vector
-from ..blender.blenderOps import fetchBoneFunction,animationLength,completeBasis
+from ..blender.blenderOps import fetchBoneFunction,animationLength,completeBasis,boneNameToId
 from ..blender.tetherOps import updateAnimationBoneFunctions,boneFunctionId
 from ..ui.HKIcons import pcoll
 # Left Leg Orientation and IK
@@ -31,6 +32,80 @@ def getMHWArmatures(self,context):
     return [(obj.name,obj.name,"") for obj in bpy.data.objects if obj.type == "ARMATURE" and "FreeHK_GuideClone_" not in obj.name]
 
 
+# ---------------------------------------------------------------------------
+# External .bmap support
+# A .bmap is a source-rig -> MHW bone map produced by external retarget tooling.
+# Format: blank-line-separated 4-line records --
+#   <targetMhBone>%<bool>%<space>%<x,y,z>%<x,y,z>%<scale>%<bool>%<bool>%<axis>%
+#   <sourceBoneName>
+#   <bool>
+#   <bool>
+# target "None" / "" means the source bone is unmapped. We keep the original
+# format for interoperability with existing bmap files.
+# ---------------------------------------------------------------------------
+def bmapDir():
+    addonRoot = os.path.dirname(os.path.dirname(__file__))   # operators/ -> addon root
+    d = os.path.join(addonRoot, "bmaps")
+    try:
+        os.makedirs(d, exist_ok=True)
+    except Exception:
+        pass
+    return d
+
+def listBmapFiles():
+    try:
+        return sorted(f for f in os.listdir(bmapDir()) if f.lower().endswith(".bmap"))
+    except Exception:
+        return []
+
+def parseBmap(filepath):
+    """Return {sourceBoneName: {target, space, pos, rot, scale, axis, flags}} for mapped
+    bones only (target not None/empty)."""
+    entries = {}
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = [l.rstrip("\n") for l in f]
+    except Exception as e:
+        print("Free Kinetics: failed to read bmap %s: %s" % (filepath, repr(e)))
+        return entries
+    def pvec(s):
+        try:
+            return tuple(float(x) for x in s.split(","))
+        except Exception:
+            return (0.0, 0.0, 0.0)
+    i, n = 0, len(lines)
+    while i < n:
+        if not lines[i].strip():
+            i += 1
+            continue
+        header = lines[i]
+        name = lines[i + 1] if i + 1 < n else ""
+        b1 = lines[i + 2] if i + 2 < n else ""
+        b2 = lines[i + 3] if i + 3 < n else ""
+        i += 4
+        parts = header.split("%")
+        target = parts[0].strip() if parts else ""
+        if not name.strip() or not target or target == "None":
+            continue
+        entries[name] = {
+            "target": target,
+            "space": parts[2] if len(parts) > 2 else "ABSOLUTE",
+            "pos": pvec(parts[3]) if len(parts) > 3 else (0.0, 0.0, 0.0),
+            "rot": pvec(parts[4]) if len(parts) > 4 else (0.0, 0.0, 0.0),
+            "scale": (float(parts[5]) if len(parts) > 5 and parts[5] else 1.0),
+            "axis": parts[8] if len(parts) > 8 else "Y",
+            "flags": (b1.strip() == "True", b2.strip() == "True"),
+        }
+    return entries
+
+_bmap_enum_cache = []
+def getBmapItems(self, context):
+    global _bmap_enum_cache
+    files = listBmapFiles()
+    _bmap_enum_cache = [(f, f, "") for f in files] or [("", "(no .bmap files)", "")]
+    return _bmap_enum_cache
+
+
 class RigTransferData(bpy.types.PropertyGroup):
     #nextAction = bpy.props.PointerProperty(name = "Next Animation", type="Action")    
     rigType: bpy.props.EnumProperty(name = "Rig Type",
@@ -46,6 +121,7 @@ class RigTransferData(bpy.types.PropertyGroup):
     targetName: bpy.props.EnumProperty(name = "Target Rig", description = "MHW Armature to bake Animation into", items = getMHWArmatures) 
     bake: bpy.props.BoolProperty(name = "Bake",default = True)
     groundRoot: bpy.props.BoolProperty(name = "Root as Ground Level", description = "Set the Root as the ground level after baking",default = True)
+    bmapFile: bpy.props.EnumProperty(name = "Bmap", description = "External bone map to tag the source rig with", items = getBmapItems)
     
     
 class PlatformIKMapping(bpy.types.PropertyGroup):
@@ -116,6 +192,10 @@ class RigTransferTools(bpy.types.Panel):
         layout.prop(props,"bake")
         if props.bake:
             layout.prop(props,"groundRoot")
+        row = layout.row(align = True)
+        row.prop(props,"bmapFile",text = "Bmap")
+        row.operator("freehk.open_bmap_folder",text = "",icon = "FILE_FOLDER")
+        layout.operator("freehk.apply_bmap",icon = "BONE_DATA")
         layout.operator("freehk.rig_transfer",icon = "MOD_ARMATURE")
         #col = layout.column(align = True)
         platform = bpy.context.scene.freehk_rig_ops_platform
@@ -674,7 +754,54 @@ class CATBoneFunction(bpy.types.Operator):
         return {"FINISHED"}
     
     
-classes = [RigTransferData, PlatformIKMapping, PlatformGroup, PlatformSingleton, RigTransferTools,RigAnimationTransfer,CATBoneFunction]
+class OpenBmapFolder(bpy.types.Operator):
+    bl_idname = "freehk.open_bmap_folder"
+    bl_label = "Open Bmap Folder"
+    bl_description = "Open the folder where .bmap retarget maps are kept (drop your .bmap files here)"
+    def execute(self, context):
+        try:
+            bpy.ops.wm.path_open(filepath=bmapDir())
+        except Exception as e:
+            self.report({'WARNING'}, "Could not open folder: %s" % repr(e))
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+class ApplyBmap(bpy.types.Operator):
+    bl_idname = "freehk.apply_bmap"
+    bl_label = "Apply Bmap to Source"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = ("Tag the Source rig's bones with MHW bone functions from the selected "
+                      ".bmap, so Rig Transfer can map them. Non-destructive: only adds a "
+                      "'boneFunction' custom property to matching source bones.")
+    def execute(self, context):
+        props = context.scene.freehk_rig_ops
+        fname = props.bmapFile
+        if not fname:
+            self.report({'WARNING'}, "No .bmap selected (drop files via Open Bmap Folder)")
+            return {'CANCELLED'}
+        source = bpy.data.objects.get(props.sourceName)
+        if source is None or source.type != 'ARMATURE':
+            self.report({'WARNING'}, "Source rig not found")
+            return {'CANCELLED'}
+        entries = parseBmap(os.path.join(bmapDir(), fname))
+        if not entries:
+            self.report({'WARNING'}, "Bmap empty or unreadable")
+            return {'CANCELLED'}
+        tagged = 0
+        for pb in source.pose.bones:
+            e = entries.get(pb.name)
+            if not e:
+                continue
+            fid = boneNameToId(e["target"])
+            if fid is not None:
+                pb["boneFunction"] = fid
+                pb.bone["boneFunction"] = fid
+                tagged += 1
+        self.report({'INFO'}, "Bmap '%s' applied: %d/%d source bones tagged"
+                    % (fname, tagged, len(source.pose.bones)))
+        return {'FINISHED'}
+
+classes = [RigTransferData, PlatformIKMapping, PlatformGroup, PlatformSingleton, RigTransferTools,RigAnimationTransfer,CATBoneFunction,OpenBmapFolder,ApplyBmap]
 
 def register():
     for cls in classes:
