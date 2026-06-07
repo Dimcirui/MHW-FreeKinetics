@@ -600,7 +600,7 @@ class RigAnimationTransfer(bpy.types.Operator):
         updateAnimationBoneFunctions(target,action)
         action.freehk.tetherFrame = target
         action.freehk.starType = "LMT_Action"
-        action.freehk.frameCount = animationLength(action)
+        action.freehk.frameCount = int(animationLength(action))   # IntProperty (4.x strict)
         completeBasis(action)
     
     def enumerateBoneFunctions(self,skeleton):

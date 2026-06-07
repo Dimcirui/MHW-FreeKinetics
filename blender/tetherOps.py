@@ -520,7 +520,10 @@ def transferTether(actions,tether):
 IK_BODY_MAP = [
     (247, 57, 'FULL'),   # Right hand IK -> right palm
     (248, 40, 'FULL'),   # Left  hand IK -> left  palm
+    (249, 20, 'FULL'),   # Right leg IK  -> right ankle
+    (250, 16, 'FULL'),   # Left  leg IK  -> left  ankle
     (252,  4, 'LOC'),    # Head IK        -> head (position only)
+    (254,  3, 'LOC'),    # Neck IK        -> neck (position only)
 ]
 
 # Ground/anchor IK controllers: bone-function -> constant MHW-space location (identity

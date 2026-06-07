@@ -279,9 +279,9 @@ class RecalculateBodyIKBones(MappedActionOperator,bpy.types.Operator):
     bl_label = "Recalculate Body IK Bones"
     bl_options = {'REGISTER', 'PRESET', 'UNDO'}
     bl_description = ("Bake the body IK controllers so they track their deform-bone targets "
-                      "(hand IK -> palm, head IK -> head). Fixes baked / authored animations where "
-                      "those IK bones were left at rest (hands snap to the body centre in game). "
-                      "Requires a tether; operates on the tethered (posed) action.")
+                      "(hands->palms, legs->ankles, head, neck). Fixes baked / authored / "
+                      "rig-transferred animations where those IK bones were left at rest or "
+                      "snapped to the source rig. Requires a tether; operates on the tethered action.")
     limit: bpy.props.BoolProperty(name = "Limit", default = True, options={'HIDDEN'} )
     def mappedOperator(self,armature,action):
         recalculateBodyIKBones(armature,action)
