@@ -51,7 +51,7 @@ def loadKeyframes(bones,action):
                 kf = fcurve.keyframe_points[ix]
                 kf.co = (timing,keyframeVal)
                 timing+=keyframeTiming     
-            bpy.context.scene.frame_end = max(bpy.context.scene.frame_end,timing)
+            bpy.context.scene.frame_end = int(max(bpy.context.scene.frame_end,timing))   # IntProperty (4.x strict)
             fcurve.update()
 
 def loadAction(action_name,lmt_action):

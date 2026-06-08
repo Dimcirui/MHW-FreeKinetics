@@ -47,7 +47,7 @@ def createTIMLKeyframes(fcurve,keyframe):
     kf.interpolation = keyframe.interpolation
     kf.back = keyframe.controlL
     kf.period = keyframe.controlR
-    bpy.context.scene.frame_end = max(keyframe.frameTiming,bpy.context.scene.frame_end)
+    bpy.context.scene.frame_end = int(max(keyframe.frameTiming,bpy.context.scene.frame_end))   # frame_end is IntProperty (4.x strict)
     return kf
 
 def customizeFCurve(fc,starType=0,boneFunction=-2):
@@ -88,7 +88,7 @@ def previewStrip(self,obj,actions):
             else:
                 delta = action.freehk.frameCount + 1
             if bpy.context.scene.frame_end < length + delta:
-                bpy.context.scene.frame_end = length+delta+1
+                bpy.context.scene.frame_end = int(length+delta+1)   # IntProperty (4.x strict)
             s = track.strips.new(name = action.name, start = length, action = action)
             length += delta
     #bpy.context.scene.frame_end = scene_length
