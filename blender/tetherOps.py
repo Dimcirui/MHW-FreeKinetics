@@ -655,7 +655,20 @@ def recalculateGroundIKBones(armature, action, mapping=None):
     _tagIKBoneFunctions(action, [c[0] for c in consts])
     armature.animation_data.action = prevAction if prevAction else action
 
-def completeMissingChannels(action): 
+def recalculateIKBones(armature, action, selected=None):
+    """Recalculate only the chosen IK controllers. `selected` is a set of bone-function ids;
+    None means all. Body controllers (in IK_BODY_MAP) are tracked to their deform bone;
+    ground/anchor controllers (in IK_GROUND_MAP) are pinned to their world point."""
+    if selected is None:
+        selected = set(e[0] for e in IK_BODY_MAP) | set(e[0] for e in IK_GROUND_MAP)
+    bodyMap   = [e for e in IK_BODY_MAP   if e[0] in selected]
+    groundMap = [e for e in IK_GROUND_MAP if e[0] in selected]
+    if bodyMap:
+        recalculateBodyIKBones(armature, action, bodyMap)
+    if groundMap:
+        recalculateGroundIKBones(armature, action, groundMap)
+
+def completeMissingChannels(action):
     errs, curveMap = verifyTuplings(action)
     for (actionPath,fold),errType in errs:
         if errType == CHANNEL_COUNT:
