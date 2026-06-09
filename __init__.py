@@ -38,16 +38,17 @@ except:
 content=bytes("","UTF-8")
 bl_info = {
     "name": "Free Kinetics",
-    "description": "Monster Hunter Animations and Timelines Import Export Tools",
+    "description": "Monster Hunter Animations and Timelines Import Export Tools (Blender 4.x port)",
     "category": "Import-Export",
-    "author": "AsteriskAmpersand",
-    "version": (1,1,0),
+    "author": "AsteriskAmpersand (Blender 4.x port: Dimcirui)",
+    "version": (1,2,0),
     #1,0,0 - Alpha, Feature Complete to Original Spec
-    #1,1,0 - Alpha, Feature Complete to Transfer Requirements    
+    #1,1,0 - Alpha, Feature Complete to Transfer Requirements
+    #1,2,0 - Blender 4.x port: MhBone adaptation + MMD->MHW authoring tools
     "blender": (4,3,0),
     "location":"Dopesheet > ActionEditor, NodeEditor > FreeHKNodeTree, File > Import",
     "wiki_url":"https://github.com/Ezekial711/MonsterHunterWorldModding/wiki/Free-Hyperkinetics-and-Independent-TIML-Works-Overview",
-    "tracker_url":"https://github.com/AsteriskAmpersand/MHW-Free-HyperKinetics/issues"    ,
+    "tracker_url":"https://github.com/Dimcirui/MHW-FreeKinetics/issues"    ,
 }                     
 
 class FreeHKAddonPreferences(AddonPreferences):
