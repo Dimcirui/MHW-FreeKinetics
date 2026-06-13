@@ -151,7 +151,7 @@ class Cstruct():
                 'serializer':   lambda x: b''.join(map(baseTypeCall[base]['serializer'],x))
                 } if base != "char" else {
                 'size': intSize*baseTypeCall[base]['size'], 
-                'deserializer': lambda x: ''.join([( baseTypeCall[base]['deserializer'](chunk) ).decode("ascii") for chunk in chunks(x,baseTypeCall[base]['size']) ]), 
+                'deserializer': lambda x: ''.join([( baseTypeCall[base]['deserializer'](chunk) ).decode("latin-1") for chunk in chunks(x,baseTypeCall[base]['size']) ]),
                 'serializer':   lambda x: x.encode('ascii').ljust(intSize, b'\x00')
                 }
         

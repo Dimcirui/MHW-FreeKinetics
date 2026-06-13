@@ -273,7 +273,11 @@ class TIML(Visitable):
         #output_print = emptyPrint
         base = stream.tell()   # TIML start (0 for a standalone file; the window base when embedded)
         self.Header = TIML_Header().marshall(stream)
-        if self.Header.count == 0: 
+        if self.Header.timl != "timl":
+            raise ValueError("Not a valid TIML file: magic is %r (expected 'timl'). "
+                             "The file may not start with the TIML block (e.g. it still has "
+                             "a wrapper/header, or it is actually an EFX)." % (self.Header.timl,))
+        if self.Header.count == 0:
             self.data = []
             self.dataHeaders = []
             return self
