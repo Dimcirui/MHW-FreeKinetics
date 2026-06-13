@@ -186,8 +186,8 @@ class TIML(Visitable):
         return b'\x00'*(-pos%16)
     
     @staticmethod
-    def marshallTIML(offset,stream):        
-        if offset != 0:           
+    def marshallTIML(offset,stream,base=0):
+        if offset != 0:
             data = TIML_Data().marshall(stream)
             #self.data.append(data)
             TIML.align(stream)                   
@@ -207,6 +207,12 @@ class TIML(Visitable):
                 typing.transforms = transforms
             for typingIx,typing in enumerate(types):
                 for transformIx,transform in enumerate(typing.transforms):
+                    # Keyframes live at the transform's stored offset. Don't trust the
+                    # sequential/aligned position: some files have no 16-byte pad before the
+                    # keyframes (e.g. transform ends mid-16-block and keys start right there),
+                    # so a blind align() over-reads and overruns the buffer.
+                    if transform.offset:
+                        stream.seek(base + transform.offset)
                     keyframes = []
                     for keyfIx in range(transform.count):
                         #output_print("\t"+hex(stream.tell())+"\t\t\t %d-%d-%d Keyframe"%(typingIx,transformIx,keyfIx))
@@ -265,6 +271,7 @@ class TIML(Visitable):
     
     def marshall(self,stream):
         #output_print = emptyPrint
+        base = stream.tell()   # TIML start (0 for a standalone file; the window base when embedded)
         self.Header = TIML_Header().marshall(stream)
         if self.Header.count == 0: 
             self.data = []
@@ -279,7 +286,7 @@ class TIML(Visitable):
         #self.data = []
         self.data = []
         for i,offset in enumerate(self.dataHeaders.offsets):
-            data = self.marshallTIML(offset,stream) 
+            data = self.marshallTIML(offset,stream,base)
             if data:
                 data.id = i
                 self.data.append(data)
